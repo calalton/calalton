@@ -11,8 +11,24 @@
   pointer-events: none;
   opacity: 0; /* hidden until it spawns in after the hero */
   visibility: hidden;
+  clip-path: inset(0 100% 0 0);
+  transform: translate3d(0, -0.75rem, 0) scale(0.92);
   transform-origin: 0 50%;
   will-change: clip-path, opacity, transform;
+  transition:
+    clip-path 700ms cubic-bezier(0.66, 0, 0.01, 1),
+    opacity 420ms ease,
+    transform 700ms cubic-bezier(0.66, 0, 0.01, 1),
+    visibility 0s linear 700ms;
+}
+
+.root[data-visible="true"] {
+  visibility: visible;
+  opacity: 1;
+  clip-path: inset(0 0 0 0);
+  transform: translate3d(0, 0, 0) scale(1);
+  pointer-events: auto;
+  transition-delay: 0s;
 }
 
 :global(html[data-footer-active="true"]) .root {

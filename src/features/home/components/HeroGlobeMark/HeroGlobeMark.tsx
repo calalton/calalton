@@ -19,49 +19,28 @@ const VB_Y = 500;
 const VB_W = 3250;
 const VB_H = 3350;
 
-const smooth = (t: number) => {
-  const x = Math.min(1, Math.max(0, t));
-  return x * x * (3 - 2 * x);
-};
-
 export function HeroGlobeMark({ className }: HeroGlobeMarkProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const applyProgress = (heroProgress: number) => {
-      const root = rootRef.current;
-      if (!root) return;
-      const reveal = smooth((heroProgress - 0.9) / 0.1);
-      root.style.visibility = reveal > 0.001 ? "visible" : "hidden";
-      root.style.opacity = reveal.toFixed(3);
-      root.style.pointerEvents = reveal > 0.5 ? "auto" : "none";
-      root.style.transform =
-        `translate3d(0, ${((1 - reveal) * -12).toFixed(2)}px, 0) ` +
-        `scale(${(0.92 + reveal * 0.08).toFixed(4)})`;
-      root.style.clipPath = `inset(0 ${(100 * (1 - reveal)).toFixed(2)}% 0 0)`;
-    };
-    const onStageScroll = (event: Event) => {
-      const progress = Math.max(
-        0,
-        Math.min(
-          1,
-          (event as CustomEvent<{ heroSceneProgress?: number }>).detail
-            ?.heroSceneProgress ?? 0,
-        ),
-      );
-      applyProgress(progress);
-    };
-
-    const initialProgress = Number.parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "--hero-scene-progress",
-      ),
+    const root = rootRef.current;
+    const hero = document.querySelector<HTMLElement>("[data-hero-banner]");
+    const wrapper = document.querySelector<HTMLElement>(
+      '[data-scroll-stage="wrapper"]',
     );
-    applyProgress(Number.isFinite(initialProgress) ? initialProgress : 0);
-    window.addEventListener("cal-scroll-stage", onStageScroll);
+    if (!root || !hero) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        root.dataset.visible = entry?.isIntersecting ? "false" : "true";
+      },
+      { root: wrapper, threshold: 0 },
+    );
+    observer.observe(hero);
 
     return () => {
-      window.removeEventListener("cal-scroll-stage", onStageScroll);
+      observer.disconnect();
+      delete root.dataset.visible;
     };
   }, []);
 

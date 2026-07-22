@@ -86,8 +86,17 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
   }
 
   void main() {
-    vec2 uv = applyCurl(vUv);
-    uv.y -= clamp(uExitProgress, 0.0, 1.0) * 0.72;
+    float exit = smoothstep(0.0, 1.0, clamp(uExitProgress, 0.0, 1.0));
+    float angle = exit * 1.45;
+    float rise = sin(angle) * 0.78;
+    float depth = 1.0 - cos(angle);
+    float wheelScale = mix(1.0, 0.66, depth);
+    float wheelTilt = mix(1.0, 0.52, exit);
+    vec2 curledUv = applyCurl(vUv);
+    vec2 uv = vec2(
+      (curledUv.x - 0.5) / wheelScale + 0.5,
+      (curledUv.y - (0.5 + rise)) / (wheelScale * wheelTilt) + 0.5
+    );
     float screenAspect = uResolution.x / uResolution.y;
     vec3 flow = texture2D(uFlow, vUv).rgb;
 
@@ -160,7 +169,9 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
 
     // Composite: holographic logo over the grey shadow ghost.
     vec3 outRgb = mix(shadowColor, rgb, cover);
-    float alpha = max(cover, shadowAlpha);
+    float exitAlpha = 1.0 - smoothstep(0.70, 0.98, exit);
+    float alpha = max(cover, shadowAlpha) * exitAlpha;
+    outRgb *= exitAlpha;
 
     gl_FragColor = vec4(outRgb, alpha);
   }
@@ -469,9 +480,15 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
 
         const s = Math.min(1.6, scroll / Math.max(window.innerHeight, 1));
         compositeUniforms.uHoloShift.value.set(s * 0.05, s * 0.09);
-        compositeUniforms.uCurlStrength.value = 0.06 * velocityStrength;
-        compositeUniforms.uExitProgress.value = heroSceneProgress;
+        compositeUniforms.uCurlStrength.value =
+          0.12 * velocityStrength +
+          0.07 * Math.sin(heroSceneProgress * Math.PI);
       }
+      compositeUniforms.uExitProgress.value = reduced
+        ? heroSceneProgress >= 0.98
+          ? 1
+          : 0
+        : heroSceneProgress;
       renderer.render(mainScene, camera);
     };
     const start = () => {

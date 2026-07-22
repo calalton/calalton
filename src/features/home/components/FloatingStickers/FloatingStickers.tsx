@@ -72,9 +72,22 @@ export function FloatingStickers({
 
     const applyCurve = () => {
       const viewportHeight = Math.max(window.innerHeight, 1);
-      const travel = sceneProgress * viewportHeight * 0.72;
-      field.style.transform = `translate3d(0, ${-travel}px, 0)`;
-      field.style.visibility = sceneProgress >= 0.98 ? "hidden" : "visible";
+      field.style.transform = "none";
+      const exit =
+        sceneProgress * sceneProgress * (3 - 2 * sceneProgress);
+      const angle = exit * 1.45;
+      const rise = Math.sin(angle) * viewportHeight * 0.78;
+      const depth =
+        (1 - Math.cos(angle)) * viewportHeight * 0.42;
+      const wheelScale = 1 - (1 - Math.cos(angle)) * 0.24;
+      const wheelTilt = exit * 68;
+      const exitFade = Math.max(
+        0,
+        Math.min(1, (0.98 - exit) / 0.28),
+      );
+      const opacity = exitFade * exitFade * (3 - 2 * exitFade);
+      field.style.opacity = (0.88 * opacity).toFixed(3);
+      field.style.visibility = sceneProgress >= 0.995 ? "hidden" : "visible";
 
       curves.forEach((curve) => {
         const lane = curve.firstElementChild;
@@ -83,20 +96,23 @@ export function FloatingStickers({
           laneTransform === "none"
             ? new DOMMatrixReadOnly()
             : new DOMMatrixReadOnly(laneTransform);
-        const centerY = laneMatrix.m42 + curve.offsetHeight / 2 - travel;
+        const centerY = laneMatrix.m42 + curve.offsetHeight / 2 - rise;
         const centered = Math.max(
           -1,
           Math.min(1, (centerY / viewportHeight - 0.5) * 2),
         );
         const profile = 1 - Math.sqrt(Math.max(0, 1 - centered * centered));
-        const uvScale = 1 - profile * 0.06 * velocityStrength;
+        const progressFlex = Math.sin(sceneProgress * Math.PI) * 0.07;
+        const uvScale =
+          1 - profile * (0.12 * velocityStrength + progressFlex);
         const scaleX = 1 / Math.max(uvScale, 0.001);
         const centerX = curve.offsetLeft + curve.offsetWidth / 2;
         const shiftX =
           (centerX - field.clientWidth / 2) * (scaleX - 1);
 
         curve.style.transform =
-          `translate3d(${shiftX}px, 0, 0) scaleX(${scaleX})`;
+          `translate3d(${shiftX}px, ${-rise}px, ${-depth}px) ` +
+          `rotateX(${wheelTilt}deg) scale(${wheelScale}) scaleX(${scaleX})`;
       });
     };
 
