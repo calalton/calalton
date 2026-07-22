@@ -71,8 +71,7 @@ export function ScrollStage({ children }: PropsWithChildren) {
       clamp01((viewportHeight - bannerBottom) / Math.max(1, viewportHeight * 0.75)) *
       clamp01(footerTop / viewportHeight);
     const heroSceneProgress =
-      clamp01((viewportHeight - bannerBottom) / viewportHeight) *
-      clamp01(footerTop / viewportHeight);
+      clamp01((viewportHeight - bannerBottom) / viewportHeight);
     const aboutEntryProgress = aboutRect
       ? clamp01((viewportHeight - (aboutRect.top - wrapperRect.top)) / viewportHeight)
       : 0;

@@ -39,20 +39,29 @@ const GLASS_COMPOSITE_VERT = /* glsl */ `
   varying vec2 vUv;
   varying float vCurveShade;
   uniform float uExitProgress;
+  uniform float uFit;
 
   void main() {
     vUv = uv;
-    float progress = clamp(uExitProgress / 0.52, 0.0, 1.0);
+    float progress = clamp(uExitProgress / 0.36, 0.0, 1.0);
     progress = progress * progress * (3.0 - 2.0 * progress);
 
     float bend = mix(0.0001, radians(88.0), progress);
-    float theta = position.x * bend;
-    float bentX = sin(theta) / bend;
-    float depth = (1.0 - cos(theta)) / bend;
-    float perspective = 1.0 + depth * 1.05;
+    float planeHalfHeight = max(uFit, 0.001);
+    float localY = position.y / planeHalfHeight;
+    float curveY = clamp(localY, -1.0, 1.0);
+    float excessY = localY - curveY;
+    float theta = -curveY * bend;
+    float bentLocalY =
+      sin(curveY * bend) / bend + excessY * cos(curveY * bend);
+    float depthLocal =
+      (1.0 - cos(theta)) / bend + excessY * sin(curveY * bend);
+    float bentY = bentLocalY * planeHalfHeight;
+    float depth = max(0.0, depthLocal * planeHalfHeight);
+    float perspective = 1.0 + depth * 1.2;
     vCurveShade = sin(theta) * progress;
 
-    gl_Position = vec4(bentX, position.y, 0.0, perspective);
+    gl_Position = vec4(position.x, bentY, 0.0, perspective);
   }
 `;
 
@@ -250,7 +259,7 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
     let dpr = 1;
 
     const flowQuad = new THREE.PlaneGeometry(2, 2);
-    const compositeQuad = new THREE.PlaneGeometry(2, 2, 64, 1);
+    const compositeQuad = new THREE.PlaneGeometry(2, 2, 1, 64);
     const flowScene = new THREE.Scene();
     const mainScene = new THREE.Scene();
     const camera = new THREE.Camera();

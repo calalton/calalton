@@ -62,20 +62,37 @@ export function FloatingStickers({
     let frame = 0;
 
     const applyCurve = (rawProgress: number) => {
-      const normalized = Math.max(0, Math.min(1, rawProgress / 0.52));
+      const normalized = Math.max(0, Math.min(1, rawProgress / 0.36));
       const progress = normalized * normalized * (3 - 2 * normalized);
+      const fadePosition = Math.max(
+        0,
+        Math.min(1, (rawProgress - 0.52) / 0.2),
+      );
+      const fade = fadePosition * fadePosition * (3 - 2 * fadePosition);
+
+      field.style.opacity = (0.88 * (1 - fade)).toFixed(4);
+      field.style.visibility = fade >= 0.999 ? "hidden" : "visible";
 
       curves.forEach((curve) => {
-        const x = Number(curve.dataset.curveX ?? 0);
-        const edge = Math.abs(x);
-        const angle = x * 78 * progress;
-        const shift = -x * edge * 18 * progress;
+        const lane = curve.firstElementChild;
+        const laneTransform = lane ? getComputedStyle(lane).transform : "none";
+        const laneMatrix =
+          laneTransform === "none"
+            ? new DOMMatrixReadOnly()
+            : new DOMMatrixReadOnly(laneTransform);
+        const centerY = laneMatrix.m42 + curve.offsetHeight / 2;
+        const y = Math.max(
+          -1,
+          Math.min(1, (centerY / Math.max(window.innerHeight, 1) - 0.5) * 2),
+        );
+        const edge = Math.abs(y);
+        const angle = -y * 82 * progress;
+        const shift = -y * edge * 18 * progress;
         const depth = -(edge * edge) * 220 * progress;
-        const tilt = edge * 8 * progress;
 
         curve.style.transform =
-          `translate3d(${shift}vw, 0, ${depth}px) ` +
-          `rotateY(${angle}deg) rotateX(${tilt}deg)`;
+          `translate3d(0, ${shift}vh, ${depth}px) ` +
+          `rotateX(${angle}deg)`;
       });
     };
 
@@ -117,7 +134,6 @@ export function FloatingStickers({
       aria-hidden="true"
     >
       {STICKERS.map((s, i) => {
-        const curveX = Math.max(-1, Math.min(1, (s.x - 50) / 50));
         const vars: StickerVars = {
           left: `${s.x}%`,
           "--dur": `${s.dur}s`,
@@ -132,7 +148,6 @@ export function FloatingStickers({
             className={styles.curve}
             style={vars}
             data-sticker-curve=""
-            data-curve-x={curveX}
           >
             <span className={styles.lane}>
               <span className={styles.sway}>

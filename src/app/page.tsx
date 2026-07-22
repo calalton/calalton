@@ -9,11 +9,11 @@ export default function Home() {
   return (
     <main>
       <ScrollStage>
-        <DesignGrid />
         <HeroGlobeMark />
         <SiteNav />
         <HeroSection />
         <HomeContent />
+        <DesignGrid />
       </ScrollStage>
     </main>
   );
