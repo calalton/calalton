@@ -58,20 +58,23 @@ export function FloatingStickers({
     const curves = Array.from(
       field.querySelectorAll<HTMLElement>("[data-sticker-curve]"),
     );
-    let pendingProgress = 0;
+    const wrapper = document.querySelector<HTMLElement>(
+      '[data-scroll-stage="wrapper"]',
+    );
+    let sceneProgress = 0;
+    let velocityStrength = 0;
+    let targetStrength = 0;
+    let previousScroll = wrapper?.scrollTop ?? 0;
+    let previousEventTime = performance.now();
+    let previousFrameTime = previousEventTime;
+    let lastEventTime = previousEventTime;
     let frame = 0;
 
-    const applyCurve = (rawProgress: number) => {
-      const normalized = Math.max(0, Math.min(1, rawProgress / 0.36));
-      const progress = normalized * normalized * (3 - 2 * normalized);
-      const fadePosition = Math.max(
-        0,
-        Math.min(1, (rawProgress - 0.52) / 0.2),
-      );
-      const fade = fadePosition * fadePosition * (3 - 2 * fadePosition);
-
-      field.style.opacity = (0.88 * (1 - fade)).toFixed(4);
-      field.style.visibility = fade >= 0.999 ? "hidden" : "visible";
+    const applyCurve = () => {
+      const viewportHeight = Math.max(window.innerHeight, 1);
+      const travel = sceneProgress * viewportHeight * 0.72;
+      field.style.transform = `translate3d(0, ${-travel}px, 0)`;
+      field.style.visibility = sceneProgress >= 0.98 ? "hidden" : "visible";
 
       curves.forEach((curve) => {
         const lane = curve.firstElementChild;
@@ -80,37 +83,69 @@ export function FloatingStickers({
           laneTransform === "none"
             ? new DOMMatrixReadOnly()
             : new DOMMatrixReadOnly(laneTransform);
-        const centerY = laneMatrix.m42 + curve.offsetHeight / 2;
-        const y = Math.max(
+        const centerY = laneMatrix.m42 + curve.offsetHeight / 2 - travel;
+        const centered = Math.max(
           -1,
-          Math.min(1, (centerY / Math.max(window.innerHeight, 1) - 0.5) * 2),
+          Math.min(1, (centerY / viewportHeight - 0.5) * 2),
         );
-        const edge = Math.abs(y);
-        const angle = -y * 82 * progress;
-        const shift = -y * edge * 18 * progress;
-        const depth = -(edge * edge) * 220 * progress;
+        const profile = 1 - Math.sqrt(Math.max(0, 1 - centered * centered));
+        const uvScale = 1 - profile * 0.06 * velocityStrength;
+        const scaleX = 1 / Math.max(uvScale, 0.001);
+        const centerX = curve.offsetLeft + curve.offsetWidth / 2;
+        const shiftX =
+          (centerX - field.clientWidth / 2) * (scaleX - 1);
 
         curve.style.transform =
-          `translate3d(0, ${shift}vh, ${depth}px) ` +
-          `rotateX(${angle}deg)`;
+          `translate3d(${shiftX}px, 0, 0) scaleX(${scaleX})`;
       });
     };
 
-    const renderPendingCurve = () => {
-      frame = 0;
-      applyCurve(pendingProgress);
+    const renderCurve = (now: number) => {
+      const dt = Math.max(
+        1 / 240,
+        Math.min((now - previousFrameTime) / 1000, 0.1),
+      );
+      if (now - lastEventTime > 34) targetStrength = 0;
+      const tau = targetStrength > velocityStrength ? 0.025 : 0.175;
+      velocityStrength +=
+        (targetStrength - velocityStrength) * (1 - Math.exp(-dt / tau));
+      previousFrameTime = now;
+      applyCurve();
+
+      if (targetStrength > 0.001 || velocityStrength > 0.001) {
+        frame = window.requestAnimationFrame(renderCurve);
+      } else {
+        frame = 0;
+      }
     };
     const onStageScroll = (event: Event) => {
-      pendingProgress = Math.max(
+      const detail = (
+        event as CustomEvent<{
+          heroSceneProgress?: number;
+          scrollTop?: number;
+        }>
+      ).detail;
+      sceneProgress = Math.max(
         0,
-        Math.min(
-          1,
-          (
-            event as CustomEvent<{ heroSceneProgress?: number }>
-          ).detail?.heroSceneProgress ?? 0,
-        ),
+        Math.min(1, detail?.heroSceneProgress ?? 0),
       );
-      if (!frame) frame = window.requestAnimationFrame(renderPendingCurve);
+      const now = performance.now();
+      const dt = Math.max(
+        1 / 240,
+        Math.min((now - previousEventTime) / 1000, 0.1),
+      );
+      const scroll = detail?.scrollTop ?? wrapper?.scrollTop ?? 0;
+      targetStrength = Math.max(
+        0,
+        Math.min(1, Math.abs(scroll - previousScroll) / dt / 800),
+      );
+      previousScroll = scroll;
+      previousEventTime = now;
+      lastEventTime = now;
+      if (!frame) {
+        previousFrameTime = now;
+        frame = window.requestAnimationFrame(renderCurve);
+      }
     };
 
     const initialProgress = Number.parseFloat(
@@ -118,7 +153,8 @@ export function FloatingStickers({
         "--hero-scene-progress",
       ),
     );
-    applyCurve(Number.isFinite(initialProgress) ? initialProgress : 0);
+    sceneProgress = Number.isFinite(initialProgress) ? initialProgress : 0;
+    applyCurve();
     window.addEventListener("cal-scroll-stage", onStageScroll);
 
     return () => {

@@ -11,11 +11,11 @@
   perspective: 80rem;
   perspective-origin: 50% 50%;
   transform-style: preserve-3d;
-  will-change: opacity;
+  will-change: opacity, transform;
 }
 
 :global(html[data-footer-active="true"]) .field {
-  visibility: hidden;
+  visibility: hidden !important;
   opacity: 0 !important;
 }
 

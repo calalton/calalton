@@ -1,5 +1,5 @@
-/* Corner globe → wordmark morph. Fixed to the viewport so it stays visible
-   while the hero scrolls away and the silhouette morphs into the logo. */
+/* White header wordmark. It reveals once the hero leaves and reverses when the
+   hero returns. */
 
 .root {
   position: fixed;
@@ -7,9 +7,12 @@
   left: var(--edge-x);
   z-index: 60;
   width: clamp(4rem, 6vw, 5.5rem);
-  color: var(--color-paper);
+  color: #fff;
   pointer-events: none;
   opacity: 0; /* hidden until it spawns in after the hero */
+  visibility: hidden;
+  transform-origin: 0 50%;
+  will-change: clip-path, opacity, transform;
 }
 
 :global(html[data-footer-active="true"]) .root {
@@ -44,12 +47,7 @@
   overflow: visible;
 }
 
-/* Morphing mark: solid dot → iris-revealed logo. */
 .logo {
   fill: currentColor;
   fill-rule: evenodd;
-}
-
-.dot {
-  fill: currentColor;
 }

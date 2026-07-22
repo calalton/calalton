@@ -35,40 +35,9 @@ const MAX_POINTS = 16;
 const STICKER_VELOCITY_SCALE = 20; // slow drift → visible warp
 const STICKER_MAX_SPEED = 0.5;
 
-const GLASS_COMPOSITE_VERT = /* glsl */ `
-  varying vec2 vUv;
-  varying float vCurveShade;
-  uniform float uExitProgress;
-  uniform float uFit;
-
-  void main() {
-    vUv = uv;
-    float progress = clamp(uExitProgress / 0.36, 0.0, 1.0);
-    progress = progress * progress * (3.0 - 2.0 * progress);
-
-    float bend = mix(0.0001, radians(88.0), progress);
-    float planeHalfHeight = max(uFit, 0.001);
-    float localY = position.y / planeHalfHeight;
-    float curveY = clamp(localY, -1.0, 1.0);
-    float excessY = localY - curveY;
-    float theta = -curveY * bend;
-    float bentLocalY =
-      sin(curveY * bend) / bend + excessY * cos(curveY * bend);
-    float depthLocal =
-      (1.0 - cos(theta)) / bend + excessY * sin(curveY * bend);
-    float bentY = bentLocalY * planeHalfHeight;
-    float depth = max(0.0, depthLocal * planeHalfHeight);
-    float perspective = 1.0 + depth * 1.2;
-    vCurveShade = sin(theta) * progress;
-
-    gl_Position = vec4(position.x, bentY, 0.0, perspective);
-  }
-`;
-
 const GLASS_COMPOSITE_FRAG = /* glsl */ `
   precision highp float;
   varying vec2 vUv;
-  varying float vCurveShade;
 
   uniform sampler2D uLogo;
   uniform sampler2D uFlow;
@@ -80,6 +49,7 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
   uniform float uLogoAspect;
   uniform float uFit;
   uniform float uCurlStrength;
+  uniform float uExitProgress;
 
   vec2 applyCurl(vec2 screenUv) {
     float centered = 2.0 * screenUv.y - 1.0;
@@ -117,6 +87,7 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
 
   void main() {
     vec2 uv = applyCurl(vUv);
+    uv.y -= clamp(uExitProgress, 0.0, 1.0) * 0.72;
     float screenAspect = uResolution.x / uResolution.y;
     vec3 flow = texture2D(uFlow, vUv).rgb;
 
@@ -189,8 +160,6 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
 
     // Composite: holographic logo over the grey shadow ghost.
     vec3 outRgb = mix(shadowColor, rgb, cover);
-    outRgb *= 1.0 - abs(vCurveShade) * 0.34;
-    outRgb += max(vCurveShade, 0.0) * 0.08;
     float alpha = max(cover, shadowAlpha);
 
     gl_FragColor = vec4(outRgb, alpha);
@@ -259,7 +228,7 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
     let dpr = 1;
 
     const flowQuad = new THREE.PlaneGeometry(2, 2);
-    const compositeQuad = new THREE.PlaneGeometry(2, 2, 1, 64);
+    const compositeQuad = new THREE.PlaneGeometry(2, 2);
     const flowScene = new THREE.Scene();
     const mainScene = new THREE.Scene();
     const camera = new THREE.Camera();
@@ -320,7 +289,7 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
       uHoloShift: { value: new THREE.Vector2(0, 0) },
     };
     const compositeMaterial = new THREE.ShaderMaterial({
-      vertexShader: GLASS_COMPOSITE_VERT,
+      vertexShader: QUAD_VERT,
       fragmentShader: GLASS_COMPOSITE_FRAG,
       uniforms: compositeUniforms,
       transparent: true,
@@ -460,19 +429,13 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
     const heroWrapper = document.querySelector(
       '[data-scroll-stage="wrapper"]',
     ) as HTMLElement | null;
-    let heroExitProgress = 0;
     let heroSceneProgress = 0;
     const onStageScroll = (event: Event) => {
       const detail = (
         event as CustomEvent<{
-          heroExitProgress?: number;
           heroSceneProgress?: number;
         }>
       ).detail;
-      heroExitProgress = Math.max(
-        0,
-        Math.min(1, detail?.heroExitProgress ?? 0),
-      );
       heroSceneProgress = Math.max(
         0,
         Math.min(1, detail?.heroSceneProgress ?? 0),
@@ -480,8 +443,11 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
     };
     window.addEventListener("cal-scroll-stage", onStageScroll);
 
+    let velocityStrength = 0;
+    let previousScroll = heroWrapper?.scrollTop ?? 0;
+    let previousTime = performance.now();
     let running = false;
-    const loop = () => {
+    const loop = (now: number) => {
       if (!running) return;
       raf = requestAnimationFrame(loop);
       if (!reduced) renderFlow();
@@ -489,11 +455,21 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
       // across the letters like a moving glare as the hero scrolls away.
       if (!reduced) {
         const scroll = heroWrapper ? heroWrapper.scrollTop : 0;
+        const dt = Math.max(
+          1 / 240,
+          Math.min((now - previousTime) / 1000, 0.1),
+        );
+        const speed = Math.abs(scroll - previousScroll) / dt;
+        const targetStrength = Math.max(0, Math.min(1, speed / 800));
+        const tau = targetStrength > velocityStrength ? 0.025 : 0.175;
+        velocityStrength +=
+          (targetStrength - velocityStrength) * (1 - Math.exp(-dt / tau));
+        previousScroll = scroll;
+        previousTime = now;
+
         const s = Math.min(1.6, scroll / Math.max(window.innerHeight, 1));
         compositeUniforms.uHoloShift.value.set(s * 0.05, s * 0.09);
-        const curlProgress =
-          heroExitProgress * heroExitProgress * (3 - 2 * heroExitProgress);
-        compositeUniforms.uCurlStrength.value = curlProgress * 0.18;
+        compositeUniforms.uCurlStrength.value = 0.06 * velocityStrength;
         compositeUniforms.uExitProgress.value = heroSceneProgress;
       }
       renderer.render(mainScene, camera);
@@ -501,6 +477,8 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
     const start = () => {
       if (running) return;
       running = true;
+      previousScroll = heroWrapper?.scrollTop ?? 0;
+      previousTime = performance.now();
       raf = requestAnimationFrame(loop);
     };
     const stop = () => {
