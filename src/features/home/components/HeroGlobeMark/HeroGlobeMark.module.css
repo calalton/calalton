@@ -6,7 +6,7 @@
   top: clamp(1.25rem, 3vh, 2rem);
   left: var(--edge-x);
   z-index: 60;
-  width: clamp(4rem, 6vw, 5.5rem);
+  width: clamp(2.75rem, 4vw, 3.75rem);
   color: #fff;
   pointer-events: none;
   opacity: 0; /* hidden until it spawns in after the hero */
@@ -39,14 +39,14 @@
 @media (min-width: 48rem) and (max-width: 64rem) {
   .root {
     top: 1.25rem;
-    width: 3.75rem;
+    width: 2.75rem;
   }
 }
 
 @media (max-width: 47.999rem) {
   .root {
     top: max(0.75rem, env(safe-area-inset-top));
-    width: 2.75rem;
+    width: 2rem;
   }
 }
 

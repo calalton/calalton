@@ -52,16 +52,16 @@
   );
   background:
     radial-gradient(
-      ellipse 52% 36% at 53% 43%,
-      rgba(148, 151, 138, 0.14),
-      transparent 68%
-    ),
-    radial-gradient(
-      ellipse 64% 44% at 48% 62%,
-      rgba(38, 49, 74, 0.12),
+      ellipse 62% 46% at 50% 0%,
+      rgba(44, 75, 213, 0.9),
       transparent 72%
     ),
-    #0f1111;
+    radial-gradient(
+      ellipse 72% 58% at 50% 18%,
+      rgba(0, 52, 76, 0.48),
+      transparent 76%
+    ),
+    #00000d;
   will-change: opacity;
 }
 
@@ -69,16 +69,16 @@
   .stageBackdrop {
     background:
       radial-gradient(
-        ellipse 46% 25% at 52% 42%,
-        rgba(160, 163, 149, 0.16),
-        transparent 70%
+        ellipse 48% 32% at 50% -8%,
+        rgba(44, 75, 213, 0.92),
+        transparent 72%
       ),
       radial-gradient(
-        ellipse 54% 30% at 48% 57%,
-        rgba(45, 57, 84, 0.12),
-        transparent 74%
+        ellipse 58% 42% at 50% 4%,
+        rgba(0, 52, 76, 0.52),
+        transparent 76%
       ),
-      #0f1111;
+      #00000d;
   }
 }
 

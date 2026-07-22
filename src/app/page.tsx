@@ -3,6 +3,7 @@ import { HeroGlobeMark } from "@/features/home/components/HeroGlobeMark/HeroGlob
 import { HomeContent } from "@/features/home/components/HomeContent/HomeContent";
 import { ScrollStage } from "@/features/home/components/ScrollStage/ScrollStage";
 import { EntryLoader } from "@/features/home/components/EntryLoader/EntryLoader";
+import { FilmGrain } from "@/features/home/components/FilmGrain/FilmGrain";
 import { DesignGrid } from "@/components/layout/DesignGrid/DesignGrid";
 import { SiteNav } from "@/components/layout/SiteNav/SiteNav";
 
@@ -16,6 +17,7 @@ export default function Home() {
         <HeroSection />
         <HomeContent />
         <DesignGrid />
+        <FilmGrain />
       </ScrollStage>
     </main>
   );

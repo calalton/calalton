@@ -38,11 +38,12 @@ const FRAGMENT_SHADER = /* glsl */ `
   uniform vec3 uColor;
   uniform vec2 uResolution;
   uniform float uPixelSize;
+  uniform float uFeather;
   uniform float uReveal;
 
-  void main() {
+  float radialMaskAlpha(vec2 uv) {
     float aspect = uResolution.x / max(uResolution.y, 1.0);
-    vec2 p = vUv * 2.0 - 1.0;
+    vec2 p = uv * 2.0 - 1.0;
     if (aspect > 1.0) {
       p.x *= aspect;
     } else {
@@ -51,20 +52,29 @@ const FRAGMENT_SHADER = /* glsl */ `
 
     float maxAxis = max(aspect, 1.0 / max(aspect, 0.0001));
     float maxRadius = sqrt(maxAxis * maxAxis + 1.0);
-    float holeRadius = maxRadius * clamp(uReveal, 0.0, 1.0);
-    float feather = max(0.025, holeRadius * 0.12);
-    float fieldAlpha = smoothstep(
+    float progress = 1.0 - clamp(uReveal, 0.0, 1.0);
+    float holeRadius = maxRadius * (1.0 - progress);
+    float edge = max(uFeather, holeRadius * 0.12);
+    float alphaHole = smoothstep(
       holeRadius,
-      holeRadius + feather,
+      holeRadius + edge,
       length(p)
     );
+    float fillMix = smoothstep(0.92, 1.0, progress);
+    return mix(alphaHole, 1.0, fillMix);
+  }
 
+  void main() {
     vec2 pixelSize = vec2(
       uPixelSize / max(uResolution.x, 1.0),
       uPixelSize / max(uResolution.y, 1.0)
     );
-    vec2 cellUv = fract(vUv / max(pixelSize, vec2(0.000001)));
-    float radius = 0.8 * fieldAlpha;
+    vec2 safePixelSize = max(pixelSize, vec2(0.000001));
+    vec2 cellId = floor(vUv / safePixelSize);
+    vec2 cellCenter = (cellId + vec2(0.5)) * safePixelSize;
+    float cellAlpha = clamp(radialMaskAlpha(cellCenter), 0.0, 1.0);
+    vec2 cellUv = fract(vUv / safePixelSize);
+    float radius = 0.8 * cellAlpha;
     float distanceToCenter = distance(cellUv, vec2(0.5));
     float antialias = max(fwidth(distanceToCenter) * 1.5, 0.001);
     float dotMask = 1.0 - smoothstep(
@@ -141,21 +151,25 @@ export function EntryLoader() {
     let revealFrame = 0;
     let fadeTimer = 0;
     let hideTimer = 0;
-    let minimumTimer = 0;
+    let contentTimer = 0;
+    let completeTimer = 0;
+    let finished = false;
     let renderer: THREE.WebGLRenderer | null = null;
     let geometry: THREE.PlaneGeometry | null = null;
     let material: THREE.ShaderMaterial | null = null;
     let resize: (() => void) | null = null;
 
     document.documentElement.dataset.entryLoading = "true";
+    document.documentElement.dataset.entryState = "loading";
     const preventScroll = (event: Event) => event.preventDefault();
     window.addEventListener("wheel", preventScroll, { passive: false });
     window.addEventListener("touchmove", preventScroll, { passive: false });
 
     const uniforms = {
-      uColor: { value: new THREE.Color("#0f1111") },
+      uColor: { value: new THREE.Color("#191b1b") },
       uResolution: { value: new THREE.Vector2(1, 1) },
       uPixelSize: { value: DOT_SIZE },
+      uFeather: { value: 0.8 },
       uReveal: { value: 0 },
     };
 
@@ -178,7 +192,7 @@ export function EntryLoader() {
         vertexShader: VERTEX_SHADER,
         fragmentShader: FRAGMENT_SHADER,
         transparent: true,
-        premultipliedAlpha: true,
+        premultipliedAlpha: false,
         depthTest: false,
         depthWrite: false,
         toneMapped: false,
@@ -210,6 +224,8 @@ export function EntryLoader() {
           if (reveal < 1) {
             revealFrame = window.requestAnimationFrame(tick);
           } else {
+            finished = true;
+            document.documentElement.dataset.entryState = "ready";
             delete document.documentElement.dataset.entryLoading;
             setMounted(false);
           }
@@ -221,6 +237,11 @@ export function EntryLoader() {
         if (disposed) return;
         setProgress(100);
         setRevealing(true);
+        document.documentElement.dataset.entryState = "revealing";
+        contentTimer = window.setTimeout(() => {
+          document.documentElement.dataset.entryState = "content";
+          window.dispatchEvent(new Event("cal-entry-content"));
+        }, 100);
         runReveal();
         fadeTimer = window.setTimeout(() => setBarFading(true), 250);
         hideTimer = window.setTimeout(() => setBarVisible(false), 500);
@@ -246,41 +267,47 @@ export function EntryLoader() {
           }),
         ),
       );
-      const minimum = new Promise<void>((resolve) => {
-        minimumTimer = window.setTimeout(resolve, 360);
-      });
-      void Promise.all([fontPromise, assetPromise, minimum]).then(beginReveal);
+      void Promise.all([fontPromise, assetPromise]).then(beginReveal);
     } catch {
       setFallback(true);
       const beginFallbackReveal = () => {
         if (disposed) return;
         setProgress(100);
         setRevealing(true);
+        document.documentElement.dataset.entryState = "revealing";
+        contentTimer = window.setTimeout(() => {
+          document.documentElement.dataset.entryState = "content";
+          window.dispatchEvent(new Event("cal-entry-content"));
+        }, 100);
         fadeTimer = window.setTimeout(() => setBarFading(true), 250);
-        hideTimer = window.setTimeout(() => {
-          setBarVisible(false);
+        hideTimer = window.setTimeout(() => setBarVisible(false), 500);
+        completeTimer = window.setTimeout(() => {
+          finished = true;
+          document.documentElement.dataset.entryState = "ready";
           delete document.documentElement.dataset.entryLoading;
           setMounted(false);
         }, REVEAL_MS);
       };
-      minimumTimer = window.setTimeout(beginFallbackReveal, 520);
+      beginFallbackReveal();
     }
 
     return () => {
       disposed = true;
       delete document.documentElement.dataset.entryLoading;
+      if (!finished) delete document.documentElement.dataset.entryState;
       window.removeEventListener("wheel", preventScroll);
       window.removeEventListener("touchmove", preventScroll);
       if (resize) window.removeEventListener("resize", resize);
       window.cancelAnimationFrame(revealFrame);
       window.clearTimeout(fadeTimer);
       window.clearTimeout(hideTimer);
-      window.clearTimeout(minimumTimer);
+      window.clearTimeout(contentTimer);
+      window.clearTimeout(completeTimer);
       geometry?.dispose();
       material?.dispose();
       renderer?.dispose();
     };
-  }, []);
+  }, [mounted]);
 
   if (!mounted) return null;
 

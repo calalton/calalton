@@ -205,7 +205,7 @@
 }
 
 .successItemFeature {
-  grid-column: 5 / span 6;
+  grid-column: 5 / span 8;
 }
 
 .successItemSecondary {
@@ -220,7 +220,13 @@
 
 .successCover {
   width: 100%;
-  aspect-ratio: 1440 / 1100;
+  aspect-ratio: 1 / 1;
+}
+
+@media (min-width: 80rem) {
+  .successItemSecondary {
+    grid-column: 1 / span 5;
+  }
 }
 
 .successMeta {
@@ -469,19 +475,16 @@
 
   .successGrid {
     row-gap: 5rem;
-    padding: 6rem 1.5rem 8rem;
+    padding: 6rem 1rem 8rem;
   }
 
-  .successItemFeature {
-    grid-column: 3 / span 9;
-  }
-
+  .successItemFeature,
   .successItemSecondary {
-    grid-column: 1 / span 9;
+    grid-column: 1 / -1;
   }
 
   .successLink {
-    padding: 0.375rem;
+    padding: 0.5rem;
   }
 
   .successMeta {
@@ -587,7 +590,7 @@
 
   .successGrid {
     row-gap: 3.5rem;
-    padding: 4.5rem 0.5rem 5.5rem;
+    padding: 4.5rem 1rem 5.5rem;
   }
 
   .successItemFeature,
@@ -597,10 +600,6 @@
 
   .successLink {
     padding: 0.5rem;
-  }
-
-  .successCover {
-    aspect-ratio: 1440 / 1100;
   }
 
   .successMeta {

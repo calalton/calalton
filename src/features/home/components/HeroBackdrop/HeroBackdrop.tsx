@@ -11,18 +11,18 @@ type HeroBackdropProps = {
 
 const CONFIG = {
   resolutionScale: 0.3,
-  pos: [0.5, 0.5] as const,
+  pos: [0.5, -0.1] as const,
   colors: {
-    bg: "#030303",
-    field: "#777970",
-    vignette: "#050505",
-    output: "#8d8f86",
+    bg: "#2c4bd5",
+    field: "#2c4bd5",
+    vignette: "#00000d",
+    output: "#00344c",
   },
-  outputMix: 0.84,
-  edgeIntensity: -0.16,
+  outputMix: 0.95,
+  edgeIntensity: -0.82,
   vignette: {
-    radius: 0.72,
-    falloff: 1.28,
+    radius: 0.354,
+    falloff: 1,
     skew: 0.54,
     angle: 0,
   },
@@ -258,7 +258,7 @@ const BOKEH_FRAG = /* glsl */ `
   uniform float uTilt;
   uniform float uTime;
 
-  #define ITERATIONS 24.0
+  #define ITERATIONS 32.0
   #define GOLDEN_ANGLE 2.39996323
 
   float hash(vec2 p) {
@@ -312,12 +312,26 @@ const OUTPUT_FRAG = /* glsl */ `
   uniform vec3 uOutputColor;
   uniform float uOutputMix;
 
+  vec3 overlay(vec3 base, vec3 blend) {
+    return mix(
+      2.0 * base * blend,
+      1.0 - 2.0 * (1.0 - base) * (1.0 - blend),
+      step(0.5, base)
+    );
+  }
+
   void main() {
-    vec3 inputColor = texture2D(tInput, vUv).rgb;
-    float luma = dot(inputColor, vec3(0.299, 0.587, 0.114));
-    float field = smoothstep(0.015, 0.48, luma);
-    vec3 color = mix(uBgColor, uOutputColor, field * clamp(uOutputMix, 0.0, 1.0));
-    gl_FragColor = vec4(color, 1.0);
+    vec3 backgroundTexture = vec3(1.0);
+    vec3 base = mix(uBgColor, overlay(uBgColor, backgroundTexture), 0.61);
+    vec3 tint = uOutputColor * 0.35;
+    vec3 blend = clamp(texture2D(tInput, vUv).rgb + tint, 0.0, 1.0);
+    vec3 finalColor = base * mix(
+      vec3(1.0),
+      blend,
+      clamp(uOutputMix, 0.0, 1.0)
+    );
+    gl_FragColor = vec4(finalColor, 1.0);
+    #include <colorspace_fragment>
   }
 `;
 
@@ -364,25 +378,27 @@ function fallbackFrame(canvas: HTMLCanvasElement) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const base = ctx.createLinearGradient(0, 0, width, height);
-  base.addColorStop(0, "#070707");
-  base.addColorStop(0.55, "#030303");
-  base.addColorStop(1, "#000000");
+  base.addColorStop(0, "#2c4bd5");
+  base.addColorStop(0.55, "#07184f");
+  base.addColorStop(1, "#00000d");
   ctx.fillStyle = base;
   ctx.fillRect(0, 0, width, height);
 
-  const glowRadius =
-    width < 768 ? Math.min(width, height) * 0.43 : width * 0.58;
+  const mobile = width < 768;
+  const glowRadius = mobile
+    ? Math.min(width, height) * 0.52
+    : Math.min(width, height) * 0.74;
   const glow = ctx.createRadialGradient(
     width * 0.5,
-    height * 0.43,
+    height * (mobile ? -0.1 : 0.5),
     0,
     width * 0.5,
-    height * 0.43,
+    height * (mobile ? -0.1 : 0.5),
     glowRadius,
   );
-  glow.addColorStop(0, "rgba(156, 158, 147, 0.58)");
-  glow.addColorStop(0.42, "rgba(92, 94, 88, 0.24)");
-  glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+  glow.addColorStop(0, "rgba(44, 75, 213, 0.92)");
+  glow.addColorStop(0.46, "rgba(0, 52, 76, 0.56)");
+  glow.addColorStop(1, "rgba(0, 0, 13, 0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, width, height);
 }
@@ -458,17 +474,6 @@ export function HeroBackdrop({ className }: HeroBackdropProps) {
         uAmplitude: { value: CONFIG.sine.amplitude },
         uRotation: { value: CONFIG.sine.rotation },
       }),
-      makePass(SHATTER_FRAG, {
-        ...commonUniforms,
-        uAmount: { value: CONFIG.shatter.amount },
-        uSpread: { value: CONFIG.shatter.spread },
-        uAngle: { value: CONFIG.shatter.angleDeg / 360 },
-        uSkew: { value: CONFIG.shatter.skew },
-        uCellScale: { value: CONFIG.shatter.cellScale },
-        uMixRadius: { value: CONFIG.shatter.mixRadius },
-        uMixRadiusInvert: { value: CONFIG.shatter.mixRadiusInvert },
-        uRoundness: { value: CONFIG.shatter.roundness },
-      }),
       makePass(BOKEH_FRAG, {
         ...commonUniforms,
         uAmount: { value: CONFIG.bokeh.amount },
@@ -510,15 +515,10 @@ export function HeroBackdrop({ className }: HeroBackdropProps) {
         Math.floor(height * dpr * CONFIG.resolutionScale),
       );
       resolution.set(targetW, targetH);
-      vignetteMaterial.uniforms.uRadius!.value = mobile
-        ? 0.52
-        : CONFIG.vignette.radius;
-      vignetteMaterial.uniforms.uFalloff!.value = mobile
-        ? 0.94
-        : CONFIG.vignette.falloff;
-      outputMaterial.uniforms.uOutputMix!.value = mobile
-        ? 0.92
-        : CONFIG.outputMix;
+      pos.set(0.5, mobile ? -0.1 : 0.5);
+      vignetteMaterial.uniforms.uRadius!.value = CONFIG.vignette.radius;
+      vignetteMaterial.uniforms.uFalloff!.value = CONFIG.vignette.falloff;
+      outputMaterial.uniforms.uOutputMix!.value = CONFIG.outputMix;
       read.dispose();
       write.dispose();
       read = makeRenderTarget(targetW, targetH);

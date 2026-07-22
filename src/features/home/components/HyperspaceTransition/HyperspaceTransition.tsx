@@ -182,7 +182,7 @@ function CloudField({ progressRef }: Pick<SceneProps, "progressRef">) {
 
   useEffect(() => () => geometry.dispose(), [geometry]);
 
-  useFrame(({ camera }) => {
+  useFrame(({ camera, size }) => {
     const progress = progressRef.current;
     const travel = smoothstep01(rangeProgress(progress, 0, 0.3));
     const opacity = 1 - smoothstep01(rangeProgress(progress, 0.11, 0.2));
@@ -203,7 +203,15 @@ function CloudField({ progressRef }: Pick<SceneProps, "progressRef">) {
       const direction = directionRef.current
         .subVectors(screenPoint, camera.position)
         .normalize();
-      const scale = perspectiveHeight * cloud.scale;
+      const responsiveScale =
+        size.width < 480
+          ? 0.52
+          : size.width < 768
+            ? 0.64
+            : size.width < 1024
+              ? 0.82
+              : 1;
+      const scale = perspectiveHeight * cloud.scale * responsiveScale;
 
       group.position
         .copy(camera.position)

@@ -354,9 +354,12 @@ function ContactSection() {
       const copyOpacity = reducedMotion
         ? 1
         : smoothstep01(clamp01(entryProgress / 0.1));
+      const copyOvershoot = window.innerWidth < 768 ? 0.015 : 0.12;
       const copyScale = reducedMotion
         ? 1
-        : 0.08 + warpProgress * 1.1 - settleProgress * 0.18;
+        : 0.08 +
+          warpProgress * (0.92 + copyOvershoot) -
+          settleProgress * copyOvershoot;
       const linksProgress = reducedMotion
         ? 1
         : smoothstep01(clamp01((entryProgress - 0.76) / 0.2));
