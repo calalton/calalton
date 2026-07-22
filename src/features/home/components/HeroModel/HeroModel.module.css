@@ -1,0 +1,14 @@
+/* Transparent R3F stage — absolutely positioned inside the hero so the inflated
+   3D mark scrolls away with the hero. Pointer events pass through; the tilt
+   reacts to the global pointer via react-three-fiber's normalised coords. */
+
+.stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.stage canvas {
+  display: block;
+}

@@ -1,0 +1,55 @@
+/* Spinning wireframe globe. The meridian's horizontal scale animates on a
+   cosine-like ease so it reads as a longitude line rotating around a sphere. */
+
+.globe {
+  display: block;
+  width: 2em;
+  height: 1em;
+  color: currentColor;
+  overflow: visible;
+  flex: none;
+}
+
+.frame {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.meridian {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: globeSpin 5s ease-in-out infinite alternate;
+}
+
+.meridian2 {
+  animation-delay: -1.66s;
+}
+
+.meridian3 {
+  animation-delay: -3.33s;
+}
+
+@keyframes globeSpin {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(-1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meridian {
+    animation: none;
+  }
+}

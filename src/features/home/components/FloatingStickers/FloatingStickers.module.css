@@ -1,0 +1,111 @@
+/* Floating stickers — staggered lanes drift down; inner wrappers add an
+   independent sway (X) and spin (rotate). Non-interactive, above the logo but
+   below the hero text. */
+
+.field {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.88;
+  perspective: 80rem;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+  will-change: opacity;
+}
+
+.curve {
+  position: absolute;
+  top: 0;
+  width: min(var(--size), 30vw);
+  height: min(var(--size), 30vw);
+  transform: translate3d(0, 0, 0);
+  transform-origin: 50% 50%;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+  will-change: transform;
+}
+
+.lane {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: stickerFall var(--dur) linear var(--delay) infinite;
+  will-change: transform;
+}
+
+.sway {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: stickerSway var(--sway) ease-in-out infinite alternate;
+}
+
+.spin {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: stickerSpin var(--spin) linear infinite;
+}
+
+.spin[data-rev="true"] {
+  animation-direction: reverse;
+}
+
+.spin img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@keyframes stickerFall {
+  from {
+    transform: translateY(-28vh);
+  }
+  to {
+    transform: translateY(128vh);
+  }
+}
+
+@keyframes stickerSway {
+  from {
+    transform: translateX(-12px);
+  }
+  to {
+    transform: translateX(12px);
+  }
+}
+
+@keyframes stickerSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 48rem) and (max-width: 64rem) {
+  .curve {
+    width: min(calc(var(--size) * 0.78), 18vw);
+    height: min(calc(var(--size) * 0.78), 18vw);
+  }
+}
+
+@media (max-width: 47.999rem) {
+  .curve {
+    width: min(calc(var(--size) * 0.66), 20vw);
+    height: min(calc(var(--size) * 0.66), 20vw);
+  }
+
+  .spin img {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field {
+    display: none;
+  }
+}

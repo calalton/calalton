@@ -1,0 +1,55 @@
+/* Corner globe → wordmark morph. Fixed to the viewport so it stays visible
+   while the hero scrolls away and the silhouette morphs into the logo. */
+
+.root {
+  position: fixed;
+  top: clamp(1.25rem, 3vh, 2rem);
+  left: var(--edge-x);
+  z-index: 60;
+  width: clamp(4rem, 6vw, 5.5rem);
+  color: var(--color-paper);
+  pointer-events: none;
+  opacity: 0; /* hidden until it spawns in after the hero */
+}
+
+:global(html[data-footer-active="true"]) .root {
+  visibility: hidden;
+  opacity: 0 !important;
+}
+
+@media (min-width: 48rem) and (max-width: 64rem) {
+  .root {
+    top: 1.25rem;
+    width: 3.75rem;
+  }
+}
+
+@media (max-width: 47.999rem) {
+  .root {
+    top: max(0.75rem, env(safe-area-inset-top));
+    width: 2.75rem;
+  }
+}
+
+.link {
+  position: relative;
+  display: block;
+  pointer-events: auto;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Morphing mark: solid dot → iris-revealed logo. */
+.logo {
+  fill: currentColor;
+  fill-rule: evenodd;
+}
+
+.dot {
+  fill: currentColor;
+}

@@ -1,0 +1,13 @@
+/* Faint measurement grid overlay — inverts against the stage so it reads as a
+   subtle light grid, matching the reference. Above the backdrop, below text. */
+
+.grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.grid svg {
+  display: block;
+}

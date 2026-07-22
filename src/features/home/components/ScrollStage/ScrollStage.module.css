@@ -1,0 +1,97 @@
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(
+      ellipse 52% 36% at 53% 43%,
+      rgba(128, 132, 118, 0.08),
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse 64% 44% at 48% 62%,
+      rgba(38, 49, 74, 0.1),
+      transparent 72%
+    ),
+    #050606;
+  scrollbar-width: none;
+  touch-action: pan-y;
+}
+
+.stage::-webkit-scrollbar {
+  display: none;
+}
+
+.content {
+  position: relative;
+  min-height: 100%;
+}
+
+.stageBackdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.stageBackdrop {
+  z-index: 0;
+  opacity: calc(1 - min(1, var(--hero-exit-progress, 0) * 1.15));
+  background:
+    radial-gradient(
+      ellipse 52% 36% at 53% 43%,
+      rgba(128, 132, 118, 0.1),
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse 64% 44% at 48% 62%,
+      rgba(38, 49, 74, 0.12),
+      transparent 72%
+    ),
+    #0f1111;
+  will-change: opacity;
+}
+
+.scrollbar {
+  position: fixed;
+  top: 50%;
+  right: 0.75rem;
+  z-index: 60;
+  display: none;
+  width: 3.5rem;
+  height: 12.5rem;
+  padding: 0 0.75rem;
+  pointer-events: none;
+  opacity: var(--stage-scrollbar-opacity, 0);
+  transform: translateY(-50%);
+  transition: opacity 240ms ease;
+}
+
+.scrollbar svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scrollbarTrack {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-paper) 16%, transparent);
+  stroke-width: 1;
+}
+
+.scrollbarThumb {
+  fill: none;
+  stroke: var(--color-paper);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+@media (min-width: 64rem) {
+  .scrollbar {
+    display: block;
+  }
+}

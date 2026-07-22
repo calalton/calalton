@@ -1,0 +1,106 @@
+/* Cal Alton wordmark treatment.
+   At rest: paper-white mark. On hover: flowing multicolour spectrum fill with a
+   subtle turbulent "fizz" plus a chromatic (RGB) split. Motion is suppressed by
+   the global prefers-reduced-motion rule; the colour wash still applies. */
+
+.root {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  isolation: isolate; /* keep chromatic ghosts blending among themselves only */
+  cursor: pointer;
+}
+
+.fill {
+  fill: var(--color-paper);
+  transition:
+    fill var(--dur-base) var(--ease-out-soft),
+    filter var(--dur-base) var(--ease-out-soft);
+}
+
+.ghost {
+  opacity: 0;
+  fill: transparent;
+  transition: opacity var(--dur-base) var(--ease-out-soft);
+  will-change: transform, opacity;
+}
+
+/* ---- Hover state -------------------------------------------------------- */
+.root:hover .fill,
+.root:focus-visible .fill {
+  fill: url(#calSpectrum);
+  animation: fillHue var(--dur-slow) linear infinite;
+}
+
+.root:hover .ghost,
+.root:focus-visible .ghost {
+  opacity: 0.85;
+  mix-blend-mode: screen;
+}
+
+.ghostRed {
+  fill: var(--color-spectrum-1);
+}
+
+.ghostBlue {
+  fill: var(--color-spectrum-5);
+}
+
+.root:hover .ghostRed,
+.root:focus-visible .ghostRed {
+  animation: driftRed 2.2s var(--ease-in-out-soft) infinite alternate;
+}
+
+.root:hover .ghostBlue,
+.root:focus-visible .ghostBlue {
+  animation: driftBlue 2.2s var(--ease-in-out-soft) infinite alternate;
+}
+
+@keyframes fillHue {
+  from {
+    filter: url(#calFizz) hue-rotate(0deg);
+  }
+  to {
+    filter: url(#calFizz) hue-rotate(360deg);
+  }
+}
+
+@keyframes driftRed {
+  from {
+    transform: translate(-5px, -1px);
+  }
+  to {
+    transform: translate(-11px, 2px);
+  }
+}
+
+@keyframes driftBlue {
+  from {
+    transform: translate(5px, 1px);
+  }
+  to {
+    transform: translate(11px, -2px);
+  }
+}
+
+/* Reduced motion: hold a static multicolour wash, no fizz / drift. */
+@media (prefers-reduced-motion: reduce) {
+  .root:hover .fill,
+  .root:focus-visible .fill {
+    animation: none;
+    filter: none;
+  }
+
+  .root:hover .ghostRed,
+  .root:focus-visible .ghostRed {
+    animation: none;
+    transform: translate(-6px, 0);
+  }
+
+  .root:hover .ghostBlue,
+  .root:focus-visible .ghostBlue {
+    animation: none;
+    transform: translate(6px, 0);
+  }
+}

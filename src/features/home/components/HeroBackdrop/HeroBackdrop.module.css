@@ -1,0 +1,11 @@
+.canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: calc(1 - min(1, max(0, (var(--hero-exit-progress, 0) - 0.35) * 1.55)));
+  will-change: opacity;
+}

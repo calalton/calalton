@@ -1,0 +1,27 @@
+/* haoqi-style blueprint grid overlay — fixed, non-interactive, blended so the
+   guide lines read against whatever sits beneath. */
+
+.grid {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  shape-rendering: crispEdges;
+}
+
+.svg path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 1;
+}
+
+.svg .cross {
+  stroke: #ffffff;
+  opacity: 0.4;
+}

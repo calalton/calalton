@@ -1,0 +1,13 @@
+/* Transparent WebGL logo layer — absolutely positioned inside the hero so the
+   centred mark scrolls away with the hero (it does not migrate). Pointer events
+   pass through; hover is captured via a window listener. */
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  pointer-events: none;
+}
