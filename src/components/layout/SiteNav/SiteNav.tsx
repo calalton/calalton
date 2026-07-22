@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { MouseEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { heroContent, navLinks } from "@/content/hero";
+import { EntryScrambleText } from "@/features/home/components/EntryScrambleText/EntryScrambleText";
 import { useScrollStage } from "@/features/home/components/ScrollStage/ScrollStage";
 import { MenuScrambleText } from "./MenuScrambleText";
 import { MenuTransitionCanvas } from "./MenuTransitionCanvas";
@@ -80,7 +81,11 @@ export function SiteNav() {
             className={styles.link}
             onClick={(event) => handleClick(event, link.href)}
           >
-            {link.label}
+            <EntryScrambleText
+              text={link.label}
+              startDelayMs={300}
+              scrambleColors={false}
+            />
           </Link>
         ))}
       </div>
@@ -149,10 +154,7 @@ export function SiteNav() {
                     className={styles.menuControl}
                     onClick={(event) => handleClick(event, link.href)}
                   >
-                    <MenuScrambleText
-                      text={link.label}
-                      startDelayMs={300}
-                    />
+                    <MenuScrambleText text={link.label} startDelayMs={300} />
                   </Link>
                 ))}
               </div>

@@ -7,8 +7,12 @@
   width: 100%;
   height: 100%;
   display: block;
-  z-index: 55;
+  z-index: 58;
   pointer-events: none;
   opacity: calc(1 - var(--footer-active, 0));
   will-change: opacity;
+}
+
+:global(html[data-hero-particles-active="true"]) .canvas {
+  z-index: 55;
 }

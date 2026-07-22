@@ -153,6 +153,7 @@ export function EntryLoader() {
     let hideTimer = 0;
     let contentTimer = 0;
     let completeTimer = 0;
+    let fallbackTimer = 0;
     let finished = false;
     let renderer: THREE.WebGLRenderer | null = null;
     let geometry: THREE.PlaneGeometry | null = null;
@@ -269,7 +270,6 @@ export function EntryLoader() {
       );
       void Promise.all([fontPromise, assetPromise]).then(beginReveal);
     } catch {
-      setFallback(true);
       const beginFallbackReveal = () => {
         if (disposed) return;
         setProgress(100);
@@ -288,7 +288,11 @@ export function EntryLoader() {
           setMounted(false);
         }, REVEAL_MS);
       };
-      beginFallbackReveal();
+      fallbackTimer = window.setTimeout(() => {
+        if (disposed) return;
+        setFallback(true);
+        beginFallbackReveal();
+      }, 0);
     }
 
     return () => {
@@ -303,6 +307,7 @@ export function EntryLoader() {
       window.clearTimeout(hideTimer);
       window.clearTimeout(contentTimer);
       window.clearTimeout(completeTimer);
+      window.clearTimeout(fallbackTimer);
       geometry?.dispose();
       material?.dispose();
       renderer?.dispose();

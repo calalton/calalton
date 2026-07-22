@@ -43,18 +43,10 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
   uniform sampler2D uFlow;
   uniform sampler2D uHolo;
   uniform float uHoloAspect;
-  uniform vec2 uHoloShift;
   uniform vec2 uResolution;
   uniform vec2 uTexel;
   uniform float uLogoAspect;
   uniform float uFit;
-  uniform float uExitProgress;
-
-  float hash21(vec2 p) {
-    p = fract(p * vec2(123.34, 456.21));
-    p += dot(p, p + 45.32);
-    return fract(p.x * p.y);
-  }
 
   vec2 toLogoUv(vec2 uv, float screenAspect) {
     vec2 c = uv - 0.5;
@@ -64,7 +56,7 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
   }
 
   // Cover-fit the holographic texture into the logo box (upright), zoomed in a
-  // touch with headroom so it can pan (uHoloShift) for a scroll-driven glare.
+  // touch so its edges remain outside the letterforms.
   vec2 coverUv(vec2 luv, float texA) {
     vec2 uv = luv;
     if (texA > uLogoAspect) {
@@ -73,7 +65,7 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
       uv.y = (uv.y - 0.5) * (texA / uLogoAspect) + 0.5;
     }
     uv.y = 1.0 - uv.y;
-    uv = (uv - 0.5) * 0.82 + 0.5 + uHoloShift;
+    uv = (uv - 0.5) * 0.82 + 0.5;
     return uv;
   }
 
@@ -83,9 +75,7 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
   }
 
   void main() {
-    float exit = smoothstep(0.0, 1.0, clamp(uExitProgress, 0.0, 1.0));
-    float depthScale = mix(1.0, 0.18, exit);
-    vec2 uv = (vUv - 0.5) / depthScale + 0.5;
+    vec2 uv = vUv;
     float screenAspect = uResolution.x / uResolution.y;
     vec3 flow = texture2D(uFlow, vUv).rgb;
 
@@ -158,17 +148,7 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
 
     // Composite: holographic logo over the grey shadow ghost.
     vec3 outRgb = mix(shadowColor, rgb, cover);
-    float dissolveProgress = smoothstep(0.12, 0.94, exit);
-    float fragmentNoise = hash21(floor(luv * vec2(84.0, 64.0)));
-    float fragmentAlpha = 1.0 - smoothstep(
-      fragmentNoise - 0.08,
-      fragmentNoise + 0.08,
-      dissolveProgress
-    );
-    float exitAlpha =
-      fragmentAlpha * (1.0 - smoothstep(0.88, 1.0, exit));
-    float alpha = max(cover, shadowAlpha) * exitAlpha;
-    outRgb *= exitAlpha;
+    float alpha = max(cover, shadowAlpha);
 
     gl_FragColor = vec4(outRgb, alpha);
   }
@@ -290,10 +270,8 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
       uTexel: { value: texel },
       uLogoAspect: { value: logoAspect },
       uFit: { value: fit },
-      uExitProgress: { value: 0 },
       uHolo: { value: null as THREE.Texture | null },
       uHoloAspect: { value: 1 },
-      uHoloShift: { value: new THREE.Vector2(0, 0) },
     };
     const compositeMaterial = new THREE.ShaderMaterial({
       vertexShader: QUAD_VERT,
@@ -436,37 +414,11 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
     const heroWrapper = document.querySelector(
       '[data-scroll-stage="wrapper"]',
     ) as HTMLElement | null;
-    let heroSceneProgress = 0;
-    const onStageScroll = (event: Event) => {
-      const detail = (
-        event as CustomEvent<{
-          heroSceneProgress?: number;
-        }>
-      ).detail;
-      heroSceneProgress = Math.max(
-        0,
-        Math.min(1, detail?.heroSceneProgress ?? 0),
-      );
-    };
-    window.addEventListener("cal-scroll-stage", onStageScroll);
-
     let running = false;
     const loop = () => {
       if (!running) return;
       raf = requestAnimationFrame(loop);
       if (!reduced) renderFlow();
-      // Pan the holographic texture with scroll → the iridescent bands slide
-      // across the letters like a moving glare as the hero scrolls away.
-      if (!reduced) {
-        const scroll = heroWrapper ? heroWrapper.scrollTop : 0;
-        const s = Math.min(1.6, scroll / Math.max(window.innerHeight, 1));
-        compositeUniforms.uHoloShift.value.set(s * 0.05, s * 0.09);
-      }
-      compositeUniforms.uExitProgress.value = reduced
-        ? heroSceneProgress >= 0.98
-          ? 1
-          : 0
-        : heroSceneProgress;
       renderer.render(mainScene, camera);
     };
     const start = () => {
@@ -500,7 +452,6 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
       visObserver?.disconnect();
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("cal-scroll-stage", onStageScroll);
       flowQuad.dispose();
       compositeQuad.dispose();
       flowMaterial.dispose();

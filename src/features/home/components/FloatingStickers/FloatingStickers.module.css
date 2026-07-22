@@ -5,13 +5,13 @@
 .field {
   position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: 58;
   pointer-events: none;
   opacity: 0.88;
-  perspective: 80rem;
-  perspective-origin: 50% 50%;
-  transform-style: preserve-3d;
-  will-change: opacity, transform;
+}
+
+:global(html[data-hero-particles-active="true"]) .field {
+  z-index: 55;
 }
 
 :global(html[data-footer-active="true"]) .field {
@@ -24,11 +24,6 @@
   top: 0;
   width: min(var(--size), 30vw);
   height: min(var(--size), 30vw);
-  transform: translate3d(0, 0, 0);
-  transform-origin: 50% 50%;
-  transform-style: preserve-3d;
-  backface-visibility: visible;
-  will-change: filter, transform;
 }
 
 .lane {

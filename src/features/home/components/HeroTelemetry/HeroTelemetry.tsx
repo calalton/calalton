@@ -4,6 +4,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { heroContent } from "@/content/hero";
+import { EntryScrambleText } from "../EntryScrambleText/EntryScrambleText";
 import styles from "./HeroTelemetry.module.css";
 
 const timeFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -48,9 +49,17 @@ export function HeroTelemetry() {
   };
 
   return (
-    <div className={styles.telemetry} aria-label="Local time and scroll progress">
+    <div
+      className={styles.telemetry}
+      aria-label="Local time and scroll progress"
+    >
       <span className={styles.readout}>
-        {time} {heroContent.telemetry.temperature}
+        <EntryScrambleText
+          text={`${time} ${heroContent.telemetry.temperature}`}
+          startDelayMs={300}
+          letterDelayMs={40}
+          scrambleColors={false}
+        />
       </span>
       <span
         className={styles.progress}

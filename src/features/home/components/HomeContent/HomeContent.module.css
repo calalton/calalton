@@ -1,6 +1,6 @@
 .root {
   position: relative;
-  z-index: 2;
+  z-index: 59;
   min-height: 100svh;
   background: transparent;
   color: var(--color-paper);

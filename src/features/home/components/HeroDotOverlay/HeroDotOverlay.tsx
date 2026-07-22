@@ -133,22 +133,34 @@ export function HeroDotOverlay() {
       scheduleRender();
     };
 
+    const setParticleState = (nextProgress: number) => {
+      const isActive = nextProgress > 0.001;
+      const activeValue = isActive ? "true" : "false";
+      canvas.dataset.active = activeValue;
+      document.documentElement.dataset.heroParticlesActive = activeValue;
+    };
+
     const handleStageScroll = (event: Event) => {
-      const nextProgress = clamp01(
-        (event as CustomEvent<{ heroExitProgress?: number }>).detail
-          ?.heroExitProgress ?? 0,
-      );
+      const detail = (
+        event as CustomEvent<{
+          heroExitProgress?: number;
+        }>
+      ).detail;
+      const nextProgress = clamp01(detail?.heroExitProgress ?? 0);
+      setParticleState(nextProgress);
       if (Math.abs(nextProgress - progress) <= 0.001) return;
       progress = nextProgress;
       scheduleRender();
     };
 
+    setParticleState(progress);
     resize();
     window.addEventListener("resize", resize);
     window.addEventListener("cal-scroll-stage", handleStageScroll);
 
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
+      delete document.documentElement.dataset.heroParticlesActive;
       window.removeEventListener("resize", resize);
       window.removeEventListener("cal-scroll-stage", handleStageScroll);
       geometry.dispose();
@@ -157,5 +169,12 @@ export function HeroDotOverlay() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className={styles.canvas}
+      data-active="false"
+      aria-hidden="true"
+    />
+  );
 }

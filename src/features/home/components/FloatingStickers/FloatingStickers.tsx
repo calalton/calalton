@@ -1,9 +1,8 @@
 "use client";
-// Client: the project's sticker PNGs drift on deterministic lanes, then
-// scatter toward the viewport edges as the hero leaves.
+// The project's sticker PNGs drift on deterministic lanes. Their hero exit is
+// handled by the shared particle mask so every hero asset leaves together.
 
 import type { CSSProperties } from "react";
-import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 import styles from "./FloatingStickers.module.css";
 
@@ -44,85 +43,9 @@ const STICKERS: Sticker[] = [
   { x: 63, size: 78, dur: 25, delay: -3, sway: 3, spin: 18, rev: true, img: 2 },
 ];
 
-export function FloatingStickers({
-  className,
-}: FloatingStickersProps = {}) {
-  const fieldRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const field = fieldRef.current;
-    if (!field) return;
-
-    const stickers = Array.from(
-      field.querySelectorAll<HTMLElement>("[data-sticker-exit]"),
-    );
-    let sceneProgress = 0;
-
-    const applyExit = () => {
-      const viewportWidth = Math.max(window.innerWidth, 1);
-      const viewportHeight = Math.max(window.innerHeight, 1);
-      field.style.transform = "none";
-      const exit =
-        sceneProgress * sceneProgress * (3 - 2 * sceneProgress);
-      const fadeProgress = Math.max(
-        0,
-        Math.min(1, (sceneProgress - 0.18) / 0.72),
-      );
-      const opacity = 1 - fadeProgress * fadeProgress * (3 - 2 * fadeProgress);
-      field.style.opacity = (0.88 * opacity).toFixed(3);
-      field.style.visibility = sceneProgress >= 0.995 ? "hidden" : "visible";
-
-      stickers.forEach((stickerElement, index) => {
-        const sticker = STICKERS[index]!;
-        const direction = sticker.x < 50 ? -1 : 1;
-        const edgeBias = 0.28 + Math.abs(sticker.x - 50) / 125;
-        const scatterX = direction * viewportWidth * edgeBias * exit;
-        const rowOffset = ((index % 4) - 1.5) * 0.055;
-        const scatterY = viewportHeight * (rowOffset - 0.08) * exit;
-        const depth = viewportHeight * 0.32 * exit;
-        const rotation = direction * (18 + (index % 5) * 8) * exit;
-        const scale = 1 - exit * 0.78;
-        const blur = exit * 7;
-
-        stickerElement.style.transform =
-          `translate3d(${scatterX}px, ${scatterY}px, ${-depth}px) ` +
-          `rotate(${rotation}deg) scale(${scale})`;
-        stickerElement.style.filter = `blur(${blur}px)`;
-      });
-    };
-    const onStageScroll = (event: Event) => {
-      const detail = (
-        event as CustomEvent<{ heroSceneProgress?: number }>
-      ).detail;
-      sceneProgress = Math.max(
-        0,
-        Math.min(1, detail?.heroSceneProgress ?? 0),
-      );
-      applyExit();
-    };
-
-    const initialProgress = Number.parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "--hero-scene-progress",
-      ),
-    );
-    sceneProgress = Number.isFinite(initialProgress) ? initialProgress : 0;
-    applyExit();
-    window.addEventListener("cal-scroll-stage", onStageScroll);
-    window.addEventListener("resize", applyExit);
-
-    return () => {
-      window.removeEventListener("cal-scroll-stage", onStageScroll);
-      window.removeEventListener("resize", applyExit);
-    };
-  }, []);
-
+export function FloatingStickers({ className }: FloatingStickersProps = {}) {
   return (
-    <div
-      ref={fieldRef}
-      className={cn(styles.field, className)}
-      aria-hidden="true"
-    >
+    <div className={cn(styles.field, className)} aria-hidden="true">
       {STICKERS.map((s, i) => {
         const vars: StickerVars = {
           left: `${s.x}%`,
@@ -133,12 +56,7 @@ export function FloatingStickers({
           "--spin": `${s.spin}s`,
         };
         return (
-          <span
-            key={i}
-            className={styles.curve}
-            style={vars}
-            data-sticker-exit=""
-          >
+          <span key={i} className={styles.curve} style={vars}>
             <span className={styles.lane}>
               <span className={styles.sway}>
                 <span

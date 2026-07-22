@@ -1,4 +1,5 @@
 import { FloatingStickers } from "../FloatingStickers/FloatingStickers";
+import { EntryScrambleText } from "../EntryScrambleText/EntryScrambleText";
 import { HeroBackdrop } from "../HeroBackdrop/HeroBackdrop";
 import { HeroDotOverlay } from "../HeroDotOverlay/HeroDotOverlay";
 import { HeroGlass2D } from "../HeroGlass2D/HeroGlass2D";
@@ -27,17 +28,33 @@ export function HeroSection() {
 
       <header className={styles.topbar}>
         <div className={styles.brand}>
-          <p className={styles.intro}>{heroContent.intro}</p>
+          <p className={styles.intro}>
+            <EntryScrambleText
+              text={heroContent.intro}
+              startDelayMs={300}
+              letterDelayMs={10}
+            />
+          </p>
         </div>
       </header>
 
       <div className={styles.bottombar}>
         <h1 id="hero-heading" className={styles.statement}>
-          {heroContent.statement.map((line) => (
-            <span key={line}>{line}</span>
+          {heroContent.statement.map((line, index) => (
+            <EntryScrambleText
+              key={line}
+              text={line}
+              startDelayMs={300 + index * 200}
+            />
           ))}
         </h1>
-        <span className={styles.coords}>{heroContent.telemetry.center}</span>
+        <EntryScrambleText
+          className={styles.coords}
+          text={heroContent.telemetry.center}
+          startDelayMs={300}
+          letterDelayMs={40}
+          scrambleColors={false}
+        />
         <SpinningGlobe className={styles.globe} />
       </div>
       <HeroTelemetry />
