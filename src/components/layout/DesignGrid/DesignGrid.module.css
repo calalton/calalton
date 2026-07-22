@@ -1,12 +1,11 @@
-/* haoqi-style blueprint grid overlay — fixed, non-interactive, blended so the
-   guide lines read against whatever sits beneath. */
+/* Fixed blueprint grid on the background plane. Foreground copy, logos,
+   particles, and media always render above it. */
 
 .grid {
   position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: -1;
   pointer-events: none;
-  mix-blend-mode: difference;
 }
 
 .svg {

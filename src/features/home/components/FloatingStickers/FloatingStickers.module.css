@@ -28,7 +28,7 @@
   transform-origin: 50% 50%;
   transform-style: preserve-3d;
   backface-visibility: visible;
-  will-change: transform;
+  will-change: filter, transform;
 }
 
 .lane {

@@ -370,15 +370,17 @@ function fallbackFrame(canvas: HTMLCanvasElement) {
   ctx.fillStyle = base;
   ctx.fillRect(0, 0, width, height);
 
+  const glowRadius =
+    width < 768 ? Math.min(width, height) * 0.43 : width * 0.58;
   const glow = ctx.createRadialGradient(
     width * 0.5,
-    height * 0.46,
+    height * 0.43,
     0,
     width * 0.5,
-    height * 0.46,
-    width * 0.58,
+    height * 0.43,
+    glowRadius,
   );
-  glow.addColorStop(0, "rgba(142, 144, 135, 0.5)");
+  glow.addColorStop(0, "rgba(156, 158, 147, 0.58)");
   glow.addColorStop(0.42, "rgba(92, 94, 88, 0.24)");
   glow.addColorStop(1, "rgba(0, 0, 0, 0)");
   ctx.fillStyle = glow;
@@ -480,6 +482,7 @@ export function HeroBackdrop({ className }: HeroBackdropProps) {
       uOutputColor: { value: color(CONFIG.colors.output) },
       uOutputMix: { value: CONFIG.outputMix },
     });
+    const vignetteMaterial = passes[0]!;
 
     let read = makeRenderTarget(1, 1);
     let write = makeRenderTarget(1, 1);
@@ -490,6 +493,7 @@ export function HeroBackdrop({ className }: HeroBackdropProps) {
     const resize = () => {
       width = Math.max(1, canvas.clientWidth);
       height = Math.max(1, canvas.clientHeight);
+      const mobile = width < 768;
       const dprCap = width < 768 ? 1 : width < 1024 ? 1.25 : 2;
       const nextDpr = Math.min(window.devicePixelRatio || 1, dprCap);
       if (nextDpr !== dpr) {
@@ -506,6 +510,15 @@ export function HeroBackdrop({ className }: HeroBackdropProps) {
         Math.floor(height * dpr * CONFIG.resolutionScale),
       );
       resolution.set(targetW, targetH);
+      vignetteMaterial.uniforms.uRadius!.value = mobile
+        ? 0.52
+        : CONFIG.vignette.radius;
+      vignetteMaterial.uniforms.uFalloff!.value = mobile
+        ? 0.94
+        : CONFIG.vignette.falloff;
+      outputMaterial.uniforms.uOutputMix!.value = mobile
+        ? 0.92
+        : CONFIG.outputMix;
       read.dispose();
       write.dispose();
       read = makeRenderTarget(targetW, targetH);
@@ -569,22 +582,32 @@ export function HeroBackdrop({ className }: HeroBackdropProps) {
     observer.observe(canvas);
     draw(0);
 
-    // Pause the (expensive multi-pass) render loop while the hero is scrolled
-    // out of view — it's invisible past the fold, so there's no point drawing.
+    // Keep the shared field alive only where it is visible: hero or footer.
     const heroEl = document.querySelector("[data-hero-banner]");
+    const footerEl = document.querySelector("#contact");
     const wrapperEl = document.querySelector<HTMLElement>(
       '[data-scroll-stage="wrapper"]',
     );
     let visObserver: IntersectionObserver | null = null;
-    if (heroEl) {
+    const observedElements = [heroEl, footerEl].filter(
+      (element): element is Element => Boolean(element),
+    );
+    if (observedElements.length > 0) {
+      const visibility = new Map<Element, boolean>();
       visObserver = new IntersectionObserver(
-        ([entry]) => {
-          if (entry?.isIntersecting) start();
+        (entries) => {
+          entries.forEach((entry) => {
+            visibility.set(entry.target, entry.isIntersecting);
+          });
+          if ([...visibility.values()].some(Boolean)) start();
           else stop();
         },
         { root: wrapperEl ?? null, threshold: 0 },
       );
-      visObserver.observe(heroEl);
+      observedElements.forEach((element) => {
+        visibility.set(element, false);
+        visObserver?.observe(element);
+      });
     } else {
       start();
     }

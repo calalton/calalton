@@ -1,8 +1,6 @@
 "use client";
-// client: floating stickers — the project's own sticker PNGs (public/stickers)
-// drift down the hero on staggered lanes with a gentle sway + spin.
-// Deterministic presets (SSR-safe, no random), pointer-events-free,
-// reduced-motion aware.
+// Client: the project's sticker PNGs drift on deterministic lanes, then
+// scatter toward the viewport edges as the hero leaves.
 
 import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
@@ -55,113 +53,52 @@ export function FloatingStickers({
     const field = fieldRef.current;
     if (!field) return;
 
-    const curves = Array.from(
-      field.querySelectorAll<HTMLElement>("[data-sticker-curve]"),
-    );
-    const wrapper = document.querySelector<HTMLElement>(
-      '[data-scroll-stage="wrapper"]',
+    const stickers = Array.from(
+      field.querySelectorAll<HTMLElement>("[data-sticker-exit]"),
     );
     let sceneProgress = 0;
-    let velocityStrength = 0;
-    let targetStrength = 0;
-    let previousScroll = wrapper?.scrollTop ?? 0;
-    let previousEventTime = performance.now();
-    let previousFrameTime = previousEventTime;
-    let lastEventTime = previousEventTime;
-    let frame = 0;
 
-    const applyCurve = () => {
+    const applyExit = () => {
+      const viewportWidth = Math.max(window.innerWidth, 1);
       const viewportHeight = Math.max(window.innerHeight, 1);
       field.style.transform = "none";
       const exit =
         sceneProgress * sceneProgress * (3 - 2 * sceneProgress);
-      const angle = exit * 1.45;
-      const rise = Math.sin(angle) * viewportHeight * 0.78;
-      const depth =
-        (1 - Math.cos(angle)) * viewportHeight * 0.42;
-      const wheelScale = 1 - (1 - Math.cos(angle)) * 0.24;
-      const wheelTilt = exit * 68;
-      const exitFade = Math.max(
+      const fadeProgress = Math.max(
         0,
-        Math.min(1, (0.98 - exit) / 0.28),
+        Math.min(1, (sceneProgress - 0.18) / 0.72),
       );
-      const opacity = exitFade * exitFade * (3 - 2 * exitFade);
+      const opacity = 1 - fadeProgress * fadeProgress * (3 - 2 * fadeProgress);
       field.style.opacity = (0.88 * opacity).toFixed(3);
       field.style.visibility = sceneProgress >= 0.995 ? "hidden" : "visible";
 
-      curves.forEach((curve) => {
-        const lane = curve.firstElementChild;
-        const laneTransform = lane ? getComputedStyle(lane).transform : "none";
-        const laneMatrix =
-          laneTransform === "none"
-            ? new DOMMatrixReadOnly()
-            : new DOMMatrixReadOnly(laneTransform);
-        const centerY = laneMatrix.m42 + curve.offsetHeight / 2 - rise;
-        const centered = Math.max(
-          -1,
-          Math.min(1, (centerY / viewportHeight - 0.5) * 2),
-        );
-        const profile = 1 - Math.sqrt(Math.max(0, 1 - centered * centered));
-        const progressFlex = Math.sin(sceneProgress * Math.PI) * 0.07;
-        const uvScale =
-          1 - profile * (0.12 * velocityStrength + progressFlex);
-        const scaleX = 1 / Math.max(uvScale, 0.001);
-        const centerX = curve.offsetLeft + curve.offsetWidth / 2;
-        const shiftX =
-          (centerX - field.clientWidth / 2) * (scaleX - 1);
+      stickers.forEach((stickerElement, index) => {
+        const sticker = STICKERS[index]!;
+        const direction = sticker.x < 50 ? -1 : 1;
+        const edgeBias = 0.28 + Math.abs(sticker.x - 50) / 125;
+        const scatterX = direction * viewportWidth * edgeBias * exit;
+        const rowOffset = ((index % 4) - 1.5) * 0.055;
+        const scatterY = viewportHeight * (rowOffset - 0.08) * exit;
+        const depth = viewportHeight * 0.32 * exit;
+        const rotation = direction * (18 + (index % 5) * 8) * exit;
+        const scale = 1 - exit * 0.78;
+        const blur = exit * 7;
 
-        curve.style.transform =
-          `translate3d(${shiftX}px, ${-rise}px, ${-depth}px) ` +
-          `rotateX(${wheelTilt}deg) scale(${wheelScale}) scaleX(${scaleX})`;
+        stickerElement.style.transform =
+          `translate3d(${scatterX}px, ${scatterY}px, ${-depth}px) ` +
+          `rotate(${rotation}deg) scale(${scale})`;
+        stickerElement.style.filter = `blur(${blur}px)`;
       });
-    };
-
-    const renderCurve = (now: number) => {
-      const dt = Math.max(
-        1 / 240,
-        Math.min((now - previousFrameTime) / 1000, 0.1),
-      );
-      if (now - lastEventTime > 34) targetStrength = 0;
-      const tau = targetStrength > velocityStrength ? 0.025 : 0.175;
-      velocityStrength +=
-        (targetStrength - velocityStrength) * (1 - Math.exp(-dt / tau));
-      previousFrameTime = now;
-      applyCurve();
-
-      if (targetStrength > 0.001 || velocityStrength > 0.001) {
-        frame = window.requestAnimationFrame(renderCurve);
-      } else {
-        frame = 0;
-      }
     };
     const onStageScroll = (event: Event) => {
       const detail = (
-        event as CustomEvent<{
-          heroSceneProgress?: number;
-          scrollTop?: number;
-        }>
+        event as CustomEvent<{ heroSceneProgress?: number }>
       ).detail;
       sceneProgress = Math.max(
         0,
         Math.min(1, detail?.heroSceneProgress ?? 0),
       );
-      const now = performance.now();
-      const dt = Math.max(
-        1 / 240,
-        Math.min((now - previousEventTime) / 1000, 0.1),
-      );
-      const scroll = detail?.scrollTop ?? wrapper?.scrollTop ?? 0;
-      targetStrength = Math.max(
-        0,
-        Math.min(1, Math.abs(scroll - previousScroll) / dt / 800),
-      );
-      previousScroll = scroll;
-      previousEventTime = now;
-      lastEventTime = now;
-      if (!frame) {
-        previousFrameTime = now;
-        frame = window.requestAnimationFrame(renderCurve);
-      }
+      applyExit();
     };
 
     const initialProgress = Number.parseFloat(
@@ -170,12 +107,13 @@ export function FloatingStickers({
       ),
     );
     sceneProgress = Number.isFinite(initialProgress) ? initialProgress : 0;
-    applyCurve();
+    applyExit();
     window.addEventListener("cal-scroll-stage", onStageScroll);
+    window.addEventListener("resize", applyExit);
 
     return () => {
-      window.cancelAnimationFrame(frame);
       window.removeEventListener("cal-scroll-stage", onStageScroll);
+      window.removeEventListener("resize", applyExit);
     };
   }, []);
 
@@ -199,7 +137,7 @@ export function FloatingStickers({
             key={i}
             className={styles.curve}
             style={vars}
-            data-sticker-curve=""
+            data-sticker-exit=""
           >
             <span className={styles.lane}>
               <span className={styles.sway}>

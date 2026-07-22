@@ -335,27 +335,36 @@ function ContactSection() {
       const reducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
-      const progress = clamp01(
-        (viewportHeight - rect.top) / (viewportHeight + rect.height),
-      );
       const entryProgress = reducedMotion
         ? 1
         : clamp01((viewportHeight - rect.top) / Math.max(1, rect.height * 0.8));
-      const particleProgress = smoothstep01(entryProgress);
-      const particleOpacity =
-        smoothstep01(clamp01(entryProgress / 0.14)) *
-        (1 - smoothstep01(clamp01((entryProgress - 0.86) / 0.14)));
-      const copyProgress = reducedMotion
+      const warpProgress = reducedMotion
         ? 1
-        : smoothstep01(clamp01((entryProgress - 0.24) / 0.58));
+        : smoothstep01(clamp01(entryProgress / 0.52));
+      const settleProgress = reducedMotion
+        ? 1
+        : smoothstep01(clamp01((entryProgress - 0.52) / 0.14));
+      const postWarpProgress = reducedMotion
+        ? 1
+        : smoothstep01(clamp01((entryProgress - 0.6) / 0.3));
+      const particleOpacity = reducedMotion
+        ? 0
+        : smoothstep01(clamp01(entryProgress / 0.08)) *
+          (1 - smoothstep01(clamp01((entryProgress - 0.46) / 0.18)));
+      const copyOpacity = reducedMotion
+        ? 1
+        : smoothstep01(clamp01(entryProgress / 0.1));
+      const copyScale = reducedMotion
+        ? 1
+        : 0.08 + warpProgress * 1.1 - settleProgress * 0.18;
       const linksProgress = reducedMotion
         ? 1
-        : smoothstep01(clamp01((entryProgress - 0.62) / 0.3));
+        : smoothstep01(clamp01((entryProgress - 0.76) / 0.2));
       const active = rect.top < viewportHeight && rect.bottom > 0;
 
       section.style.setProperty(
         "--contact-push-x",
-        `${(progress * 50).toFixed(3)}%`,
+        `${(postWarpProgress * 50).toFixed(3)}%`,
       );
       section.style.setProperty(
         "--contact-entry-progress",
@@ -363,7 +372,7 @@ function ContactSection() {
       );
       section.style.setProperty(
         "--contact-particle-radius",
-        `${(1.82 * (1 - particleProgress)).toFixed(3)}px`,
+        `${(1.82 * (1 - warpProgress)).toFixed(3)}px`,
       );
       section.style.setProperty(
         "--contact-particle-opacity",
@@ -371,11 +380,15 @@ function ContactSection() {
       );
       section.style.setProperty(
         "--contact-copy-opacity",
-        copyProgress.toFixed(4),
+        copyOpacity.toFixed(4),
       );
       section.style.setProperty(
         "--contact-copy-y",
-        `${((1 - copyProgress) * 24).toFixed(3)}svh`,
+        `${((1 - postWarpProgress) * 8).toFixed(3)}svh`,
+      );
+      section.style.setProperty(
+        "--contact-copy-scale",
+        copyScale.toFixed(4),
       );
       section.style.setProperty(
         "--contact-links-opacity",
@@ -392,7 +405,7 @@ function ContactSection() {
       );
       document.documentElement.style.setProperty(
         "--footer-entry-progress",
-        entryProgress.toFixed(4),
+        warpProgress.toFixed(4),
       );
       document.documentElement.dataset.footerActive = active ? "true" : "false";
     };

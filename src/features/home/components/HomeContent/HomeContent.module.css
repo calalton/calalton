@@ -264,6 +264,7 @@
   --contact-particle-opacity: 1;
   --contact-copy-opacity: 0;
   --contact-copy-y: 24svh;
+  --contact-copy-scale: 0.08;
   --contact-links-opacity: 0;
   --contact-links-y: 28px;
   position: relative;
@@ -326,7 +327,9 @@
   line-height: 0.8;
   text-transform: uppercase;
   opacity: var(--contact-copy-opacity);
-  transform: translate3d(0, var(--contact-copy-y), 0);
+  transform: translate3d(0, var(--contact-copy-y), 0)
+    scale(var(--contact-copy-scale));
+  transform-origin: 50% 50%;
   will-change: opacity, transform;
 }
 
@@ -561,7 +564,8 @@
   }
 
   .aboutBottom {
-    bottom: 3rem;
+    top: calc(50% + min(10.5rem, 22vh));
+    bottom: auto;
     min-height: 0;
   }
 
@@ -686,7 +690,8 @@
   }
 
   .aboutBottom {
-    bottom: 0.75rem;
+    top: calc(48% + min(8.5rem, 20vh));
+    bottom: auto;
   }
 
   .aboutParagraph {

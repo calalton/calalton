@@ -29,7 +29,9 @@
 
 .content {
   position: relative;
+  z-index: 1;
   min-height: 100%;
+  isolation: isolate;
 }
 
 .stageBackdrop {
@@ -40,11 +42,18 @@
 
 .stageBackdrop {
   z-index: 0;
-  opacity: calc(1 - min(1, var(--hero-exit-progress, 0) * 1.15));
+  opacity: clamp(
+    0,
+    calc(
+      1 - min(1, var(--hero-exit-progress, 0) * 1.15) +
+        var(--footer-active, 0)
+    ),
+    1
+  );
   background:
     radial-gradient(
       ellipse 52% 36% at 53% 43%,
-      rgba(128, 132, 118, 0.1),
+      rgba(148, 151, 138, 0.14),
       transparent 68%
     ),
     radial-gradient(
@@ -54,6 +63,23 @@
     ),
     #0f1111;
   will-change: opacity;
+}
+
+@media (max-width: 47.999rem) {
+  .stageBackdrop {
+    background:
+      radial-gradient(
+        ellipse 46% 25% at 52% 42%,
+        rgba(160, 163, 149, 0.16),
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 54% 30% at 48% 57%,
+        rgba(45, 57, 84, 0.12),
+        transparent 74%
+      ),
+      #0f1111;
+  }
 }
 
 .scrollbar {
