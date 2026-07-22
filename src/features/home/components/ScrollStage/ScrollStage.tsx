@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import {
   createContext,
   useCallback,
@@ -8,19 +8,12 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState,
 } from "react";
 import Lenis from "lenis";
 import styles from "./ScrollStage.module.css";
 
 type ScrollStageContextValue = {
   scrollTo: (target: string | number | HTMLElement) => void;
-};
-
-type StageMetrics = {
-  offset: number;
-  thumb: number;
-  visible: boolean;
 };
 
 const ScrollStageContext = createContext<ScrollStageContextValue | null>(null);
@@ -38,11 +31,8 @@ export function ScrollStage({ children }: PropsWithChildren) {
   const contentRef = useRef<HTMLDivElement | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const hideTimerRef = useRef<number | null>(null);
-  const [metrics, setMetrics] = useState<StageMetrics>({
-    offset: 6,
-    thumb: 188,
-    visible: false,
-  });
+  const scrollbarRef = useRef<HTMLDivElement | null>(null);
+  const scrollbarThumbRef = useRef<SVGPathElement | null>(null);
 
   const publishMetrics = useCallback((visible = true) => {
     const wrapper = wrapperRef.current;
@@ -66,20 +56,35 @@ export function ScrollStage({ children }: PropsWithChildren) {
     const bannerBottom = bannerRect
       ? bannerRect.bottom - wrapperRect.top
       : viewportHeight;
-    const footerTop = footerRect ? footerRect.top - wrapperRect.top : viewportHeight;
+    const footerTop = footerRect
+      ? footerRect.top - wrapperRect.top
+      : viewportHeight;
     const heroExitProgress =
-      clamp01((viewportHeight - bannerBottom) / Math.max(1, viewportHeight * 0.75)) *
-      clamp01(footerTop / viewportHeight);
-    const heroSceneProgress =
-      clamp01((viewportHeight - bannerBottom) / viewportHeight);
+      clamp01(
+        (viewportHeight - bannerBottom) / Math.max(1, viewportHeight * 0.75),
+      ) * clamp01(footerTop / viewportHeight);
+    const heroSceneProgress = clamp01(
+      (viewportHeight - bannerBottom) / viewportHeight,
+    );
     const aboutEntryProgress = aboutRect
-      ? clamp01((viewportHeight - (aboutRect.top - wrapperRect.top)) / viewportHeight)
+      ? clamp01(
+          (viewportHeight - (aboutRect.top - wrapperRect.top)) / viewportHeight,
+        )
       : 0;
 
     wrapper.style.setProperty("--scroll-progress", progress.toFixed(5));
-    wrapper.style.setProperty("--hero-exit-progress", heroExitProgress.toFixed(5));
-    wrapper.style.setProperty("--hero-scene-progress", heroSceneProgress.toFixed(5));
-    wrapper.style.setProperty("--about-entry-progress", aboutEntryProgress.toFixed(5));
+    wrapper.style.setProperty(
+      "--hero-exit-progress",
+      heroExitProgress.toFixed(5),
+    );
+    wrapper.style.setProperty(
+      "--hero-scene-progress",
+      heroSceneProgress.toFixed(5),
+    );
+    wrapper.style.setProperty(
+      "--about-entry-progress",
+      aboutEntryProgress.toFixed(5),
+    );
     wrapper.style.setProperty("--stage-scrollbar-opacity", visible ? "1" : "0");
     document.documentElement.style.setProperty(
       "--hero-exit-progress",
@@ -92,6 +97,14 @@ export function ScrollStage({ children }: PropsWithChildren) {
     document.documentElement.style.setProperty(
       "--about-entry-progress",
       aboutEntryProgress.toFixed(5),
+    );
+    scrollbarRef.current?.style.setProperty(
+      "--stage-scrollbar-opacity",
+      visible ? "1" : "0",
+    );
+    scrollbarThumbRef.current?.setAttribute(
+      "d",
+      `M16 ${offset.toFixed(2)}V${(offset + thumb).toFixed(2)}`,
     );
     window.dispatchEvent(
       new CustomEvent("cal-scroll-stage", {
@@ -106,18 +119,6 @@ export function ScrollStage({ children }: PropsWithChildren) {
         },
       }),
     );
-
-    setMetrics((current) => {
-      const next = { offset, thumb, visible };
-      if (
-        Math.abs(current.offset - next.offset) < 0.5 &&
-        Math.abs(current.thumb - next.thumb) < 0.5 &&
-        current.visible === next.visible
-      ) {
-        return current;
-      }
-      return next;
-    });
   }, []);
 
   useEffect(() => {
@@ -135,13 +136,18 @@ export function ScrollStage({ children }: PropsWithChildren) {
       autoRaf: false,
     });
 
+    wrapper.scrollTop = 0;
+    lenis.scrollTo(0, { immediate: true, force: true });
     lenisRef.current = lenis;
     let rafId = 0;
 
     const showThenHide = () => {
       publishMetrics(true);
       if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = window.setTimeout(() => publishMetrics(false), 2000);
+      hideTimerRef.current = window.setTimeout(
+        () => publishMetrics(false),
+        2000,
+      );
     };
 
     const unsubscribe = lenis.on("scroll", showThenHide);
@@ -194,26 +200,27 @@ export function ScrollStage({ children }: PropsWithChildren) {
 
   return (
     <ScrollStageContext.Provider value={value}>
-      <div ref={wrapperRef} className={styles.stage} data-scroll-stage="wrapper">
+      <div
+        ref={wrapperRef}
+        className={styles.stage}
+        data-scroll-stage="wrapper"
+      >
         <div className={styles.stageBackdrop} aria-hidden="true" />
-        <div ref={contentRef} className={styles.content} data-scroll-stage="content">
+        <div
+          ref={contentRef}
+          className={styles.content}
+          data-scroll-stage="content"
+        >
           {children}
         </div>
       </div>
-      <div
-        className={styles.scrollbar}
-        style={
-          {
-            "--stage-scrollbar-opacity": metrics.visible ? 1 : 0,
-          } as CSSProperties
-        }
-        aria-hidden="true"
-      >
+      <div ref={scrollbarRef} className={styles.scrollbar} aria-hidden="true">
         <svg viewBox="0 0 32 200" focusable="false">
           <path className={styles.scrollbarTrack} d="M16 6V194" />
           <path
+            ref={scrollbarThumbRef}
             className={styles.scrollbarThumb}
-            d={`M16 ${metrics.offset.toFixed(2)}V${(metrics.offset + metrics.thumb).toFixed(2)}`}
+            d="M16 6V194"
           />
         </svg>
       </div>

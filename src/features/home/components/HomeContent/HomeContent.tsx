@@ -33,10 +33,10 @@ const gapImages = [
 ] as const;
 
 const aboutCopyLines = [
-  "Every product gives people a split-second read on whether to trust it.",
-  "I'm Cal Alton, a design engineer exploring AI at scale. I close that gap",
-  "with sharp systems, careful craft, and clear, expressive digital products",
-  "and thoughtful tools that help creative teams move faster without losing care.",
+  "Every product gives people a split-second read on whether to trust it. I'm",
+  "Cal Alton, a design engineer exploring AI at scale. I close that gap with",
+  "sharp systems, careful craft, and clear, expressive digital products and",
+  "thoughtful tools that help creative teams move faster without losing care.",
 ] as const;
 
 const aboutCopy = aboutCopyLines.join(" ");
@@ -69,11 +69,6 @@ const successCurveItems = successStories.map((story) => ({
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
-}
-
-function smoothstep01(value: number) {
-  const clamped = clamp01(value);
-  return clamped * clamped * (3 - 2 * clamped);
 }
 
 function easeOutExpo(value: number) {
@@ -191,17 +186,12 @@ function MonologAboutSection() {
       frame = window.requestAnimationFrame(update);
     };
 
-    const wrapper = document.querySelector<HTMLElement>(
-      '[data-scroll-stage="wrapper"]',
-    );
-    wrapper?.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("cal-scroll-stage", schedule);
     window.addEventListener("resize", schedule);
 
     update();
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
-      wrapper?.removeEventListener("scroll", schedule);
       window.removeEventListener("cal-scroll-stage", schedule);
       window.removeEventListener("resize", schedule);
     };
@@ -323,9 +313,6 @@ function ContactSection() {
     const section = sectionRef.current;
     if (!section) return;
 
-    const wrapper = document.querySelector<HTMLElement>(
-      '[data-scroll-stage="wrapper"]',
-    );
     let frame = 0;
 
     const update = () => {
@@ -335,71 +322,26 @@ function ContactSection() {
       const reducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
-      const entryProgress = reducedMotion
-        ? 1
-        : clamp01((viewportHeight - rect.top) / Math.max(1, rect.height * 0.8));
-      const warpProgress = reducedMotion
-        ? 1
-        : smoothstep01(clamp01(entryProgress / 0.52));
-      const settleProgress = reducedMotion
-        ? 1
-        : smoothstep01(clamp01((entryProgress - 0.52) / 0.14));
-      const postWarpProgress = reducedMotion
-        ? 1
-        : smoothstep01(clamp01((entryProgress - 0.6) / 0.3));
-      const particleOpacity = reducedMotion
+      const traverseProgress = reducedMotion
         ? 0
-        : smoothstep01(clamp01(entryProgress / 0.08)) *
-          (1 - smoothstep01(clamp01((entryProgress - 0.46) / 0.18)));
-      const copyOpacity = reducedMotion
-        ? 1
-        : smoothstep01(clamp01(entryProgress / 0.1));
-      const copyOvershoot = window.innerWidth < 768 ? 0.015 : 0.12;
-      const copyScale = reducedMotion
-        ? 1
-        : 0.08 +
-          warpProgress * (0.92 + copyOvershoot) -
-          settleProgress * copyOvershoot;
-      const linksProgress = reducedMotion
-        ? 1
-        : smoothstep01(clamp01((entryProgress - 0.76) / 0.2));
+        : clamp01(
+            (viewportHeight - rect.top) /
+              Math.max(1, rect.height + viewportHeight),
+          );
+      const clipStart = viewportHeight * 0.5;
+      const clipEnd = rect.height * 0.1;
+      const clipProgress = reducedMotion
+        ? 0
+        : clamp01((clipStart - rect.bottom) / Math.max(1, clipStart - clipEnd));
       const active = rect.top < viewportHeight && rect.bottom > 0;
 
       section.style.setProperty(
         "--contact-push-x",
-        `${(postWarpProgress * 50).toFixed(3)}%`,
+        `${(traverseProgress * 50).toFixed(3)}%`,
       );
       section.style.setProperty(
-        "--contact-entry-progress",
-        entryProgress.toFixed(4),
-      );
-      section.style.setProperty(
-        "--contact-particle-radius",
-        `${(1.82 * (1 - warpProgress)).toFixed(3)}px`,
-      );
-      section.style.setProperty(
-        "--contact-particle-opacity",
-        particleOpacity.toFixed(4),
-      );
-      section.style.setProperty(
-        "--contact-copy-opacity",
-        copyOpacity.toFixed(4),
-      );
-      section.style.setProperty(
-        "--contact-copy-y",
-        `${((1 - postWarpProgress) * 8).toFixed(3)}svh`,
-      );
-      section.style.setProperty(
-        "--contact-copy-scale",
-        copyScale.toFixed(4),
-      );
-      section.style.setProperty(
-        "--contact-links-opacity",
-        linksProgress.toFixed(4),
-      );
-      section.style.setProperty(
-        "--contact-links-y",
-        `${((1 - linksProgress) * 28).toFixed(2)}px`,
+        "--contact-clip-inset",
+        `${(clipProgress * 1.25).toFixed(4)}%`,
       );
       section.dataset.contactActive = active ? "true" : "false";
       document.documentElement.style.setProperty(
@@ -408,7 +350,7 @@ function ContactSection() {
       );
       document.documentElement.style.setProperty(
         "--footer-entry-progress",
-        warpProgress.toFixed(4),
+        active ? "1" : "0",
       );
       document.documentElement.dataset.footerActive = active ? "true" : "false";
     };
@@ -418,14 +360,12 @@ function ContactSection() {
       frame = window.requestAnimationFrame(update);
     };
 
-    wrapper?.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("cal-scroll-stage", schedule);
     window.addEventListener("resize", schedule);
     update();
 
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
-      wrapper?.removeEventListener("scroll", schedule);
       window.removeEventListener("cal-scroll-stage", schedule);
       window.removeEventListener("resize", schedule);
       document.documentElement.style.removeProperty("--footer-active");
@@ -481,8 +421,6 @@ function ContactSection() {
             </a>
           </div>
         </div>
-
-        <div className={styles.contactParticleCurtain} aria-hidden="true" />
       </div>
     </footer>
   );

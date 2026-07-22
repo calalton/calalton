@@ -11,7 +11,7 @@ export const site = {
     "Cal Alton — independent creative technologist crafting expressive, high-craft digital experiences.",
   url: "https://calalton.com",
   locale: "en_GB",
-  email: "hello@calalton.com",
+  email: "build@calalton.com",
   social: {
     instagram: "https://instagram.com/",
     linkedin: "https://linkedin.com/",

@@ -3,8 +3,13 @@
   inset: 0;
   z-index: 200;
   overflow: hidden;
+  background: #191b1b;
   pointer-events: auto;
   touch-action: none;
+}
+
+.loader.revealing {
+  background: transparent;
 }
 
 .canvas {

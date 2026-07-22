@@ -48,13 +48,6 @@ export function HeroSection() {
             />
           ))}
         </h1>
-        <EntryScrambleText
-          className={styles.coords}
-          text={heroContent.telemetry.center}
-          startDelayMs={300}
-          letterDelayMs={40}
-          scrambleColors={false}
-        />
         <SpinningGlobe className={styles.globe} />
       </div>
       <HeroTelemetry />

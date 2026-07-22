@@ -89,7 +89,7 @@
   right: var(--edge-x);
   bottom: clamp(1rem, 3vh, 1.75rem);
   display: grid;
-  grid-template-columns: minmax(0, max-content) 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
   gap: 1rem;
   font-family: var(--font-mono-2);
@@ -97,14 +97,6 @@
   line-height: 1.5;
   letter-spacing: 0;
   color: var(--color-paper-faint);
-}
-
-.coords {
-  justify-self: center;
-  padding: 0.5rem;
-  text-align: center;
-  text-transform: uppercase;
-  white-space: nowrap;
 }
 
 .globe {
@@ -185,10 +177,6 @@
     position: relative;
     z-index: 59;
     width: 100%;
-  }
-
-  .coords {
-    display: none;
   }
 
   .globe {

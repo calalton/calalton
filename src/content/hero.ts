@@ -9,7 +9,6 @@ export const heroContent = {
     "I'm Cal Alton, leading Design Engineering and AI exploration at, engineering, and AI at scale. Outside work, I build design tools for team efficiency.",
   badge: ["w.", "Nominee"],
   telemetry: {
-    center: "0756 X 0431 Y",
     temperature: "30°C",
   },
 } as const;

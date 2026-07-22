@@ -54,18 +54,29 @@ const FRAGMENT_SHADER = `
     return vec2(distortedX, screenUv.y);
   }
 
-  vec2 coverUv(vec2 uv) {
+  vec2 containUv(vec2 uv, out float imageMask) {
     float frameAspect = (uRect.z * uViewportPx.x) /
       max(uRect.w * uViewportPx.y, 1.0);
-    vec2 scale = vec2(1.0);
+    vec2 displayScale = vec2(1.0);
 
     if (uImageAspect > frameAspect) {
-      scale.x = frameAspect / uImageAspect;
+      displayScale.y = frameAspect / uImageAspect;
     } else {
-      scale.y = uImageAspect / frameAspect;
+      displayScale.x = uImageAspect / frameAspect;
     }
 
-    return (uv - 0.5) * scale + 0.5;
+    vec2 imageUv = (uv - 0.5) / displayScale + 0.5;
+    vec2 imageEdge = min(imageUv, 1.0 - imageUv);
+    float shortestSide = max(
+      min(uRect.z * uViewportPx.x, uRect.w * uViewportPx.y),
+      1.0
+    );
+    imageMask = smoothstep(
+      0.0,
+      1.5 / shortestSide,
+      min(imageEdge.x, imageEdge.y)
+    );
+    return clamp(imageUv, 0.0, 1.0);
   }
 
   vec3 applyPolarity(vec3 rgb) {
@@ -82,9 +93,13 @@ const FRAGMENT_SHADER = `
       1.0
     );
     float alpha = smoothstep(0.0, 1.5 / shortestSide, min(edge.x, edge.y));
-    vec4 texel = texture2D(uImage, coverUv(localUv));
+    float imageMask = 0.0;
+    vec4 texel = texture2D(uImage, containUv(localUv, imageMask));
 
-    gl_FragColor = vec4(applyPolarity(texel.rgb), texel.a * alpha);
+    gl_FragColor = vec4(
+      applyPolarity(texel.rgb),
+      texel.a * alpha * imageMask
+    );
   }
 `;
 

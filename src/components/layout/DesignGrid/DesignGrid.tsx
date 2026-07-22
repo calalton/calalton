@@ -70,9 +70,8 @@ export function DesignGrid() {
 
   if (!size.w) return null;
   const { vertical, horizontal, cross } = buildPaths(size.w, size.h);
-
-  return (
-    <div className={styles.grid} aria-hidden="true">
+  const renderGrid = (className?: string) => (
+    <div className={className} aria-hidden="true">
       <svg
         width={size.w}
         height={size.h}
@@ -84,5 +83,12 @@ export function DesignGrid() {
         <path d={cross} className={styles.cross} />
       </svg>
     </div>
+  );
+
+  return (
+    <>
+      {renderGrid(styles.gridRear)}
+      {renderGrid(styles.gridFront)}
+    </>
   );
 }

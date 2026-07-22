@@ -47,6 +47,7 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
   uniform vec2 uTexel;
   uniform float uLogoAspect;
   uniform float uFit;
+  uniform float uExitProgress;
 
   vec2 toLogoUv(vec2 uv, float screenAspect) {
     vec2 c = uv - 0.5;
@@ -75,7 +76,9 @@ const GLASS_COMPOSITE_FRAG = /* glsl */ `
   }
 
   void main() {
-    vec2 uv = vUv;
+    float exit = smoothstep(0.0, 1.0, clamp(uExitProgress, 0.0, 1.0));
+    float exitScale = mix(1.0, 0.62, exit);
+    vec2 uv = (vUv - 0.5) / exitScale + 0.5;
     float screenAspect = uResolution.x / uResolution.y;
     vec3 flow = texture2D(uFlow, vUv).rgb;
 
@@ -214,6 +217,7 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
     }
     renderer.setClearColor(0x000000, 0);
     let dpr = 1;
+    let frameInterval = window.innerWidth < 768 ? 1000 / 30 : 1000 / 45;
 
     const flowQuad = new THREE.PlaneGeometry(2, 2);
     const compositeQuad = new THREE.PlaneGeometry(2, 2);
@@ -270,6 +274,7 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
       uTexel: { value: texel },
       uLogoAspect: { value: logoAspect },
       uFit: { value: fit },
+      uExitProgress: { value: 0 },
       uHolo: { value: null as THREE.Texture | null },
       uHoloAspect: { value: 1 },
     };
@@ -327,6 +332,7 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
     const resize = () => {
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
+      frameInterval = w < 768 ? 1000 / 30 : 1000 / 45;
       const dprCap = w < 768 ? 2 : w < 1024 ? 1.25 : 1.5;
       const nextDpr = Math.min(window.devicePixelRatio || 1, dprCap);
       if (nextDpr !== dpr) {
@@ -414,16 +420,38 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
     const heroWrapper = document.querySelector(
       '[data-scroll-stage="wrapper"]',
     ) as HTMLElement | null;
+    const onStageScroll = (event: Event) => {
+      const detail = (event as CustomEvent<{ heroExitProgress?: number }>)
+        .detail;
+      compositeUniforms.uExitProgress.value = Math.min(
+        1,
+        Math.max(0, detail?.heroExitProgress ?? 0),
+      );
+    };
+    const initialExitProgress = Number.parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue(
+        "--hero-exit-progress",
+      ),
+    );
+    compositeUniforms.uExitProgress.value = Number.isFinite(initialExitProgress)
+      ? initialExitProgress
+      : 0;
+    window.addEventListener("cal-scroll-stage", onStageScroll);
+
     let running = false;
-    const loop = () => {
+    let lastFrame = -Infinity;
+    const loop = (time: number) => {
       if (!running) return;
       raf = requestAnimationFrame(loop);
+      if (time - lastFrame < frameInterval) return;
+      lastFrame = time;
       if (!reduced) renderFlow();
       renderer.render(mainScene, camera);
     };
     const start = () => {
       if (running) return;
       running = true;
+      lastFrame = -Infinity;
       raf = requestAnimationFrame(loop);
     };
     const stop = () => {
@@ -452,6 +480,7 @@ export function HeroGlass2D({ className, fit = 0.6 }: HeroGlass2DProps) {
       visObserver?.disconnect();
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("cal-scroll-stage", onStageScroll);
       flowQuad.dispose();
       compositeQuad.dispose();
       flowMaterial.dispose();

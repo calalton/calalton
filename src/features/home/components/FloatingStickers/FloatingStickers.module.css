@@ -5,7 +5,7 @@
 .field {
   position: fixed;
   inset: 0;
-  z-index: 58;
+  z-index: 66;
   pointer-events: none;
   opacity: 0.88;
 }
@@ -24,6 +24,7 @@
   top: 0;
   width: min(var(--size), 30vw);
   height: min(var(--size), 30vw);
+  will-change: transform;
 }
 
 .lane {

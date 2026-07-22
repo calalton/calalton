@@ -5,7 +5,7 @@
   position: fixed;
   top: clamp(1.25rem, 3vh, 2rem);
   left: var(--edge-x);
-  z-index: 60;
+  z-index: 69;
   width: clamp(2.75rem, 4vw, 3.75rem);
   color: #fff;
   pointer-events: none;
@@ -47,6 +47,10 @@
   .root {
     top: max(0.75rem, env(safe-area-inset-top));
     width: 2rem;
+  }
+
+  .root[data-visible="true"] {
+    margin: 0.5rem;
   }
 }
 

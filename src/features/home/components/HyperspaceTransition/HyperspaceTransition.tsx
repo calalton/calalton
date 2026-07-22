@@ -625,14 +625,12 @@ export function HyperspaceTransition() {
       measure();
     };
 
-    wrapper?.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("cal-scroll-stage", schedule);
     window.addEventListener("resize", schedule);
     measure();
 
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
-      wrapper?.removeEventListener("scroll", schedule);
       window.removeEventListener("cal-scroll-stage", schedule);
       window.removeEventListener("resize", schedule);
     };

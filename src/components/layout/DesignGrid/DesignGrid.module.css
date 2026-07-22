@@ -1,10 +1,22 @@
-/* Fixed blueprint grid above the WebGL background scene and below copy/media. */
+/* The rear grid never crosses hero assets. A second copy fades in only after
+   the particle field has nearly covered them, keeping the grid visible through
+   later sections without the brief foreground overlap on reverse scroll. */
 
-.grid {
+.gridRear,
+.gridFront {
   position: fixed;
   inset: 0;
-  z-index: 57;
   pointer-events: none;
+}
+
+.gridRear {
+  z-index: 54;
+}
+
+.gridFront {
+  z-index: 57;
+  opacity: clamp(0, calc((var(--hero-exit-progress, 0) - 0.82) * 5.5556), 1);
+  will-change: opacity;
 }
 
 .svg {
