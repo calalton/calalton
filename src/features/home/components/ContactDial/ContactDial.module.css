@@ -24,7 +24,8 @@
   transform-origin: 50% 50%;
 }
 
-/* Nine finger-holes: flat light discs punched into the white plate (no ring). */
+/* Nine finger-holes: glossy pillow buttons with a thin inner ring line, per the
+   reference dial. */
 .hole {
   position: absolute;
   display: grid;
@@ -32,8 +33,28 @@
   width: 15.6%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--color-paper) 94%, var(--color-ink));
+  background: radial-gradient(
+    circle at 50% 34%,
+    #ffffff 0%,
+    #f2efe7 56%,
+    #e3dfd5 100%
+  );
+  box-shadow:
+    0 0.3rem 0.55rem rgba(0, 0, 0, 0.12),
+    inset 0 0.05rem 0.03rem rgba(255, 255, 255, 0.9),
+    inset 0 -0.14rem 0.28rem rgba(0, 0, 0, 0.05);
   transform: translate(-50%, -50%);
+}
+
+/* Thin inner ring line on the blank holes (tinted via --ring). */
+.hole:not(.holeLink)::after {
+  content: "";
+  position: absolute;
+  inset: 19%;
+  border-radius: 50%;
+  border: 1.5px solid
+    var(--ring, color-mix(in srgb, var(--color-ink) 22%, transparent));
+  pointer-events: none;
 }
 
 .holeLink {
@@ -45,7 +66,12 @@
 
 .holeLink:hover,
 .holeLink:focus-visible {
-  background: color-mix(in srgb, var(--color-paper) 84%, var(--color-ink));
+  background: radial-gradient(
+    circle at 50% 34%,
+    #ffffff 0%,
+    #f7f4ed 58%,
+    #ebe7dd 100%
+  );
   outline: none;
 }
 
