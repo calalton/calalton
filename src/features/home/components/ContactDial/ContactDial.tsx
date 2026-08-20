@@ -3,7 +3,7 @@
 "use client";
 
 import type { MouseEvent, ReactNode } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { site } from "@/lib/site";
 import styles from "./ContactDial.module.css";
@@ -56,10 +56,47 @@ const HOLE_LINKS: Record<number, DialLink> = {
   6: { label: "send email", href: `mailto:${site.email}`, icon: <MailIcon /> },
 };
 
+// Curved center label; repeats so it reads as a continuous ring while it spins.
+const RING_TEXT = "People → ".repeat(3);
+
 export function ContactDial({ className }: { className?: string }) {
   const [label, setLabel] = useState<string | null>(null);
+  const dialRef = useRef<HTMLDivElement | null>(null);
   const wheelRef = useRef<HTMLDivElement | null>(null);
   const spinningRef = useRef(false);
+
+  // Spin the curved "People →" ring from the dial's position in the viewport,
+  // so it turns as the page scrolls up and down.
+  useEffect(() => {
+    const el = dialRef.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const rect = el.getBoundingClientRect();
+      const viewport = Math.max(window.innerHeight, 1);
+      const progress = (viewport / 2 - (rect.top + rect.height / 2)) / viewport;
+      el.style.setProperty(
+        "--people-spin",
+        `${(progress * 540).toFixed(2)}deg`,
+      );
+    };
+    const schedule = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("cal-scroll-stage", schedule);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("cal-scroll-stage", schedule);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, []);
 
   const handleDial = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -103,6 +140,7 @@ export function ContactDial({ className }: { className?: string }) {
 
   return (
     <div
+      ref={dialRef}
       className={cn(styles.dial, className)}
       data-active={label ? "true" : "false"}
       onMouseLeave={() => setLabel(null)}
@@ -166,8 +204,25 @@ export function ContactDial({ className }: { className?: string }) {
           >
             {label}
           </span>
-          <span className={styles.people} data-hidden={label ? "true" : "false"}>
-            People
+          <span className={styles.spin} data-hidden={label ? "true" : "false"}>
+            <svg
+              viewBox="0 0 100 100"
+              className={styles.spinSvg}
+              aria-hidden="true"
+            >
+              <defs>
+                <path
+                  id="dial-people-arc"
+                  fill="none"
+                  d="M50,50 m-33,0 a33,33 0 1,1 66,0 a33,33 0 1,1 -66,0"
+                />
+              </defs>
+              <text className={styles.spinText}>
+                <textPath href="#dial-people-arc" startOffset="0">
+                  {RING_TEXT}
+                </textPath>
+              </text>
+            </svg>
           </span>
         </span>
       </div>
