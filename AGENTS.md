@@ -30,7 +30,7 @@ src/
     <x>/components/…
   content/        Cross-feature copy/config (hero.ts, site-metadata.ts).
   lib/            Cross-cutting utilities, domain-named (cn.ts, site.ts, motion.ts).
-scripts/          Build-time tooling (trace-logo.mjs).
+scripts/          Build-time logo tooling (trace-logo.mjs, generate-logo-sdf.mjs).
 public/           Static assets (calaltonlogo.png — the logo source of truth).
 ```
 
@@ -51,16 +51,14 @@ sideways between features.
 - **Server-first.** Pages and sections are Server Components; interactivity lives in leaf
   components only. Every `"use client"` file carries a one-line justification comment on the
   first line: `// client: <reason>` (grep it — `HeroCanvas` follows this).
-- The hero (`features/home/components/HeroSection`) is a Server Component. The giant mark
-  is **one** `HeroCanvas` — a single transparent Three.js WebGL2 layer mounted **globally in
-  the root layout** (fixed, `z-index:40`, `pointer-events:none`). It renders only the logo
-  (transparent elsewhere) with a mouse-driven **flowmap distortion + chromatic aberration +
-  grain**, and a scroll-driven **liquid migration**: on scroll the mark goes fluid with a
-  comet tail, streaks to the top-left corner and settles there as the header logo, reforming
-  in the centre on scroll back. There is deliberately **no second logo** — do not add a
-  separate header mark. Scroll progress is published as the `--hero-p` CSS variable (drives
-  the hero text fade). Hero background grain/vignette is the separate CSS `FilmGrain` layer.
-  Tuning lives in `CONFIG` and the shader constants; see `HeroCanvas/shaders.ts`.
+- The hero (`features/home/components/HeroSection`) is a Server Component. Its centred mark
+  is one `HeroGlass2D` WebGL visual: a full-screen inverse signed-distance matte reveals the
+  portal through the logo, while a ping-pong flowmap supplies its pointer response. Its entry
+  morph and perspective/barrel scroll pass live in that same shader; do not add a second
+  independent hero logo. `HeroBackdrop` is the separate fixed cloud-tunnel scene revealed by
+  the aperture. The fixed layers remain decorative and `pointer-events:none`;
+  `HeroPointerField` publishes interaction for the logo treatment. Hero background grain is
+  the separate CSS `FilmGrain` layer.
 - No state libraries, no context. Data is static content from `src/content`. Add React state
   only in leaves, only when an effect genuinely needs it.
 
@@ -86,12 +84,13 @@ sideways between features.
 
 ## The Cal Alton mark (brand)
 
-- `public/calaltonlogo.png` is the source of truth. It is the texture sampled by the hero
-  WebGL shader **and** the input to `scripts/trace-logo.mjs` (`pnpm trace:logo`), which
-  potraces it into `src/components/brand/CalAltonMark/logo-path.ts` (auto-generated — never
-  hand-edit) for the standalone SVG mark used outside the hero.
+- `public/calaltonlogo.png` is the source of truth. `pnpm sdf:logo` converts it into the
+  committed `public/media/calalton-logo-sdf.png` distance-field texture sampled by the hero
+  shader. It is also the input to `scripts/trace-logo.mjs` (`pnpm trace:logo`), which potraces
+  it into `src/components/brand/CalAltonMark/logo-path.ts` (auto-generated — never hand-edit)
+  for the standalone SVG mark used outside the hero.
 - `CalAltonMark.tsx` (the SVG) is available for small logo placements (nav/footer). The
-  giant hero mark is the WebGL canvas, not this component.
+  giant hero mark is the inverse-SDF WebGL portal, not this component.
 - The accessible page `<h1>` is the top-left statement in `HeroSection`; the canvas and the
   SVG mark are decorative. Keep exactly one `h1` per route.
 
@@ -105,7 +104,8 @@ sideways between features.
 ## Verification
 
 `pnpm check` runs `typecheck` then `lint` and must stay green. `pnpm build` (Turbopack)
-before shipping layout-affecting changes. `pnpm trace:logo` after any logo change.
+before shipping layout-affecting changes. Run `pnpm trace:logo` and `pnpm sdf:logo` after any
+logo change.
 
 Note: native build scripts (`sharp`, `unrs-resolver`) are approved via
 `pnpm-workspace.yaml → onlyBuiltDependencies`. If `pnpm run *` starts failing with

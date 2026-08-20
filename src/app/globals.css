@@ -5,7 +5,7 @@
    Every visual value in the app resolves to one of these. Add a token here
    before hard-coding a value in a component.
    ========================================================================== */
-@theme {
+@theme static {
   /* Palette — matched to Haoqi's dark overlay and paper colors */
   --color-void: #0f1111;
   --color-ink: #171919;
@@ -13,6 +13,15 @@
   --color-paper: #fbfaf4;
   --color-paper-dim: #c9c7c0;
   --color-paper-faint: #8b8c86;
+  --color-portal-matte: #fff;
+  --color-portal-ink: #000;
+  --color-cloud-sky-top: #003e6b;
+  --color-cloud-fog: #0eaebc;
+  --color-cloud-tint: #dce7f5;
+  --color-cloud-base: #171919;
+  --color-case-paper: #fff;
+  --color-case-ink: #000;
+  --color-case-line: #d3d2d2;
 
   /* Multicolour hover spectrum (logo + accents) */
   --color-spectrum-1: #ff2e97;
@@ -21,6 +30,10 @@
   --color-spectrum-4: #c0fe04;
   --color-spectrum-5: #009dff;
   --color-spectrum-6: #64c3ff;
+  --color-liquid-glass: #c9e8f8;
+
+  /* Optical treatment */
+  --blur-liquid-glass: 1.25rem;
 
   /* Typography */
   --font-sans: var(--font-sans-var), "tiktok", sans-serif;
@@ -31,17 +44,43 @@
   --text-eyebrow: 0.75rem;
   --text-body: 1rem;
   --text-lead: clamp(1.05rem, 1.6vw, 1.35rem);
+  --text-hero-statement: 1.5rem;
+  --text-hero-hint: 0.75rem;
 
   /* Motion */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-cubic: cubic-bezier(0.215, 0.61, 0.355, 1);
   --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-fast: 180ms;
   --dur-base: 420ms;
+  --dur-case-reveal-lead: 200ms;
+  --dur-case-reveal-title-delay: 80ms;
+  --dur-case-reveal-tags-delay: 140ms;
+  --dur-case-reveal-link-delay: 220ms;
+  --dur-case-reveal: 600ms;
   --dur-slow: 900ms;
 
   /* Layout */
   --edge-x: clamp(1.25rem, 5vw, 3.5rem);
   --edge-y: clamp(1.25rem, 4vh, 2.5rem);
+  --edge-hero: clamp(0.75rem, 0.4875rem + 1.07vw, 1.5rem);
+  --gutter-hero: clamp(1rem, 0.825rem + 0.71vw, 1.5rem);
+  --edge-case-frame: 1.5rem;
+  --edge-case-frame-mobile: 0.875rem;
+  --edge-case-dock: 3.25rem;
+  --edge-case-mobile-header: 3.5rem;
+  --edge-case-stack-prelude: 8.75rem;
+  --edge-case-stack-raise: 8.125rem;
+  --perspective-case-fold: 32.5rem;
+  --distance-case-mobile-drift: 8.125rem;
+  --size-work-featured-gap: calc(16rem / 14.4);
+  --size-work-featured-cell: calc(162rem / 14.4);
+  --size-work-featured-globe: calc(
+    var(--size-work-featured-cell) * 4 + var(--size-work-featured-gap) * 5
+  );
+  --space-work-featured-globe-top: calc(144rem / 14.4);
+  --space-work-featured-bottom: calc(200rem / 14.4);
+  --space-work-featured-buffer: calc(120rem / 14.4);
 
   /* Radius */
   --radius-pill: 999px;

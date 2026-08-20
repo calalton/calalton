@@ -36,9 +36,20 @@ layer, never sideways between features.
 `public/calaltonlogo.png` → `scripts/trace-logo.mjs` (potrace) →
 `src/components/brand/CalAltonMark/logo-path.ts` (auto-generated) → `CalAltonMark.tsx`.
 
+The same source runs through `scripts/generate-logo-sdf.mjs` (`pnpm sdf:logo`) to produce
+`public/media/calalton-logo-sdf.png`. `HeroGlass2D` samples that committed distance field so
+the entry circle can morph smoothly into every disconnected part of the wordmark without a
+runtime distance-transform pass.
+
 Run `pnpm trace:logo` after changing the PNG. The generated module is committed so the app
 builds without running potrace. The intermediate preview SVG lands in `.cache/`
 (gitignored).
+
+The hero samples the generated distance field in `HeroGlass2D`. One transparent WebGL canvas
+draws the inverse white matte, the circle-to-letter entry morph, the pointer flow, and the
+scroll-linked perspective/barrel pass. `HeroBackdrop` is an independent fixed cloud-tunnel
+scene revealed through that aperture; pointer events are consumed by the logo treatment, not
+by the backdrop.
 
 ## Styling strategy
 

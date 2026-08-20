@@ -1,3 +1,4 @@
+// client: reveals hero copy on the shared entry timeline.
 "use client";
 
 import type { CSSProperties } from "react";
@@ -111,7 +112,8 @@ export function EntryScrambleText({
   }
 
   const elapsed = startedAt === null ? 0 : clock - startedAt;
-  const lineElapsed = elapsed - startDelayMs;
+  const lineElapsed =
+    startedAt === null ? Number.NEGATIVE_INFINITY : elapsed - startDelayMs;
   const scrambleDuration = letterDelayMs * 4;
   const colorPhaseDuration = letterDelayMs * 2;
   const lineVisible = startedAt !== null && lineElapsed >= 0;

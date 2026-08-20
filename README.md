@@ -35,6 +35,7 @@ pnpm approve-builds --all
 | `pnpm lint`        | ESLint                                                       |
 | `pnpm format`      | Prettier write                                               |
 | `pnpm trace:logo`  | Re-trace `public/calaltonlogo.png` → the mark's path module  |
+| `pnpm sdf:logo`    | Rebuild the hero's signed-distance logo texture             |
 
 ## Project layout
 
@@ -45,7 +46,7 @@ src/
   features/    home/ (HeroSection)
   content/     hero.ts, site-metadata.ts
   lib/         cn.ts, site.ts, motion.ts
-scripts/       trace-logo.mjs
+scripts/       trace-logo.mjs + generate-logo-sdf.mjs
 public/        calaltonlogo.png (logo source of truth)
 ```
 

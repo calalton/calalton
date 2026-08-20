@@ -48,24 +48,18 @@ export function ScrollStage({ children }: PropsWithChildren) {
     const offset = 6 + progress * (188 - thumb);
     const wrapperRect = wrapper.getBoundingClientRect();
     const banner = wrapper.querySelector<HTMLElement>("[data-hero-banner]");
-    const footer = wrapper.querySelector<HTMLElement>("#contact");
     const about = wrapper.querySelector<HTMLElement>("[data-about-section]");
     const bannerRect = banner?.getBoundingClientRect();
-    const footerRect = footer?.getBoundingClientRect();
     const aboutRect = about?.getBoundingClientRect();
-    const bannerBottom = bannerRect
-      ? bannerRect.bottom - wrapperRect.top
-      : viewportHeight;
-    const footerTop = footerRect
-      ? footerRect.top - wrapperRect.top
-      : viewportHeight;
-    const heroExitProgress =
-      clamp01(
-        (viewportHeight - bannerBottom) / Math.max(1, viewportHeight * 0.75),
-      ) * clamp01(footerTop / viewportHeight);
-    const heroSceneProgress = clamp01(
-      (viewportHeight - bannerBottom) / viewportHeight,
+    const bannerTop = bannerRect
+      ? bannerRect.top - wrapperRect.top
+      : 0;
+    const heroDistance = Math.max(1, bannerRect?.height ?? viewportHeight);
+    const heroTravel = Math.max(0, -bannerTop);
+    const heroExitProgress = clamp01(
+      heroTravel / Math.max(1, heroDistance * 0.75),
     );
+    const heroSceneProgress = clamp01(heroTravel / heroDistance);
     const aboutEntryProgress = aboutRect
       ? clamp01(
           (viewportHeight - (aboutRect.top - wrapperRect.top)) / viewportHeight,

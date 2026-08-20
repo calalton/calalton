@@ -1,5 +1,5 @@
-"use client";
 // client: mobile menu state and scroll-stage anchor handling.
+"use client";
 
 import Link from "next/link";
 import type { MouseEvent } from "react";
@@ -60,8 +60,6 @@ export function SiteNav() {
     }
     event.preventDefault();
 
-    if (href === "#theme" || href === "#sound") return;
-
     scrollStage?.scrollTo(href);
     window.history.replaceState(null, "", href);
     setMenuOpen(false);
@@ -83,7 +81,7 @@ export function SiteNav() {
           >
             <EntryScrambleText
               text={link.label}
-              startDelayMs={300}
+              startDelayMs={0}
               scrambleColors={false}
             />
           </Link>
@@ -128,7 +126,7 @@ export function SiteNav() {
               >
                 <MenuScrambleText text="HOME" startDelayMs={300} />
               </Link>
-              {navLinks.slice(0, 2).map((link, index) => (
+              {navLinks.map((link, index) => (
                 <Link
                   key={`mobile-${link.href}`}
                   href={link.href}
@@ -146,18 +144,6 @@ export function SiteNav() {
               <span className={styles.menuReadout}>
                 {time} {heroContent.telemetry.temperature}
               </span>
-              <div className={styles.menuControls}>
-                {navLinks.slice(2).map((link) => (
-                  <Link
-                    key={`mobile-control-${link.href}`}
-                    href={link.href}
-                    className={styles.menuControl}
-                    onClick={(event) => handleClick(event, link.href)}
-                  >
-                    <MenuScrambleText text={link.label} startDelayMs={300} />
-                  </Link>
-                ))}
-              </div>
             </div>
           </div>
         </>

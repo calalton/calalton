@@ -1,234 +1,87 @@
-/* Reference-style hero: top intro, bottom-left statement over the centred
-   glass mark, and a bottom telemetry row. The WebGL
-   backdrop paints the soft field; all text is above. */
+/* One viewport of runway drives the fixed mark and bottom copy. */
 
 .hero {
   position: relative;
+  height: 100svh;
   min-height: 100svh;
-  padding: clamp(1.25rem, 3vh, 2rem) var(--edge-x);
   background: transparent;
 }
 
-/* Foreground text above the WebGL canvases. */
-.topbar,
-.intro,
 .bottombar {
-  position: relative;
-  z-index: 59;
-}
-
-/* ---- Top band ----------------------------------------------------------- */
-.topbar {
-  display: flex;
-  align-items: flex-start;
-  width: 100%;
-}
-
-.brand {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.75rem, 2vw, 1.4rem);
-  width: 100%;
-  min-width: 0;
-}
-
-.brandGlobeSpace {
-  width: clamp(4rem, 6vw, 5.5rem);
-  aspect-ratio: 1 / 1;
+  position: fixed;
+  right: var(--edge-hero);
+  bottom: max(var(--edge-hero), env(safe-area-inset-bottom));
+  left: var(--edge-hero);
+  z-index: 67;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: end;
+  column-gap: var(--gutter-hero);
+  color: var(--color-portal-ink);
+  opacity: clamp(
+    0,
+    calc(1 - var(--hero-scene-progress, 0) * 160),
+    1
+  );
+  transform: translate3d(
+    0,
+    calc(var(--hero-scene-progress, 0) * -0.75rem),
+    0
+  );
+  pointer-events: none;
+  will-change: opacity, transform;
 }
 
 .statement {
-  margin: 0;
+  grid-column: 1 / span 4;
   min-width: 0;
-  max-width: 22ch;
-  display: flex;
-  flex-direction: column;
+  margin: 0;
   font-family: var(--font-sans);
-  font-variation-settings: "wdth" 120;
+  font-size: var(--text-hero-statement);
+  font-variation-settings: "wdth" 100;
   font-weight: 700;
-  font-size: 7.2svw;
-  line-height: 1;
+  line-height: 0.9;
   letter-spacing: 0;
   text-transform: uppercase;
-  color: var(--color-paper);
-  text-wrap: balance;
 }
 
-@media (min-width: 64rem) {
-  .statement {
-    font-size: 6svw;
-  }
+.statementLine {
+  display: block;
 }
 
-@media (min-width: 80rem) {
-  .statement {
-    font-size: 5.6svw;
-  }
-}
-
-@media (min-width: 96rem) {
-  .statement {
-    font-size: 5svw;
-  }
-}
-
-.intro {
+.scrollHint {
+  grid-column: 5;
+  min-width: 0;
   margin: 0;
-  padding: 0.5rem;
-  max-width: 34rem;
-  font-family: var(--font-mono);
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--color-paper-dim);
-}
-
-/* ---- Bottom telemetry row ---------------------------------------------- */
-.bottombar {
-  position: absolute;
-  left: var(--edge-x);
-  right: var(--edge-x);
-  bottom: clamp(1rem, 3vh, 1.75rem);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 1rem;
-  font-family: var(--font-mono-2);
-  font-size: 1rem;
-  line-height: 1.5;
+  font-family: var(--font-sans);
+  font-size: var(--text-hero-hint);
+  font-variation-settings: "wdth" 75;
+  font-weight: 400;
+  line-height: 1.1;
   letter-spacing: 0;
-  color: var(--color-paper-faint);
+  text-align: right;
+  text-transform: uppercase;
+  overflow-wrap: normal;
 }
 
-.globe {
-  width: 2em;
-  height: 1em;
-  margin-block: 0.5rem;
-  color: var(--color-paper-faint);
-}
-
-@media (min-width: 48rem) and (max-width: 64rem) {
-  .hero {
-    padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
-  }
-
-  .intro {
-    max-width: 29rem;
-    font-size: 0.875rem;
-    line-height: 1.45;
-  }
-
-  .statement {
-    max-width: 14ch;
-    font-size: 4rem;
-    line-height: 0.94;
-  }
-
+@media (min-width: 48rem) {
   .bottombar {
-    bottom: 1.25rem;
-    font-size: 0.8rem;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
   }
-}
 
-@media (min-width: 48rem) and (max-width: 56rem) {
   .statement {
-    font-size: 3.5rem;
+    grid-column: 1 / span 6;
+  }
+
+  .scrollHint {
+    grid-column: 12;
   }
 }
 
-@media (max-width: 47.999rem) {
-  .hero {
-    min-height: 100svh;
-    height: 100dvh;
-    padding-top: max(4.25rem, calc(env(safe-area-inset-top) + 3.5rem));
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
-  }
-
-  .topbar {
+@media (prefers-reduced-motion: reduce) {
+  .bottombar {
     position: absolute;
-    right: 1rem;
-    bottom: max(5rem, calc(env(safe-area-inset-bottom) + 4.5rem));
-    left: 1rem;
-    padding: 0 0.5rem;
-  }
-
-  .intro {
-    width: 100%;
-    max-width: 31rem;
-    padding: 0;
-    font-size: 1rem;
-    line-height: 1.48;
-  }
-
-  .statement {
-    max-width: none;
-    padding: 0 0.5rem;
-    font-size: 2.25rem;
-    line-height: 1;
-  }
-
-  .bottombar {
-    position: static;
-    display: contents;
-    font-size: 0.75rem;
-  }
-
-  .statement {
-    position: relative;
-    z-index: 59;
-    width: 100%;
-  }
-
-  .globe {
-    display: none;
-  }
-}
-
-@media (max-width: 30rem) {
-  .statement {
-    font-size: 2.05rem;
-  }
-}
-
-@media (max-width: 26rem) {
-  .statement {
-    font-size: 1.9rem;
-  }
-}
-
-@media (max-width: 23rem) {
-  .statement {
-    font-size: 1.65rem;
-  }
-
-  .intro {
-    max-width: 27rem;
-    font-size: 0.88rem;
-  }
-}
-
-@media (max-width: 47.999rem) and (max-height: 43rem) {
-  .hero {
-    padding-top: 3.65rem;
-  }
-
-  .intro {
-    max-width: 28rem;
-    font-size: 0.84rem;
-    line-height: 1.35;
-  }
-
-  .statement {
-    font-size: 1.9rem;
-  }
-}
-
-@media (max-width: 23rem) and (max-height: 43rem) {
-  .intro {
-    font-size: 0.8rem;
-  }
-
-  .statement {
-    font-size: 1.6rem;
+    opacity: 1;
+    transform: none;
   }
 }

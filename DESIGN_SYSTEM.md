@@ -35,12 +35,13 @@ Never hard-code a hex in component CSS — reference the token.
 
 ## Effects
 
-- **Hero (`features/home/components/HeroCanvas`)** — a Three.js WebGL2 layer. The logo PNG
-  is a texture; a ping-pong **flowmap** accumulates pointer velocity (radius/dissipation in
-  `CONFIG`) and displaces the logo UVs, with the displacement magnitude driving a
-  **chromatic aberration** (RGB channel split). A fine per-pixel **shader film grain** and
-  soft vignette finish it. Under reduced motion the flow field is frozen and grain is
-  minimal. Shaders live in `HeroCanvas/shaders.ts`; tuning lives in `CONFIG`.
+- **Hero portal (`features/home/components/HeroGlass2D`)** — a full-screen inverse matte that
+  samples the generated Cal Alton signed-distance texture. It owns the circle-to-letter entry,
+  smoky edge, pointer flowmap, and perspective/barrel scroll pass in one WebGL2 shader. Under
+  reduced motion it resolves immediately to the static aperture and disables flow/scroll warp.
+- **Hero backdrop (`features/home/components/HeroBackdrop`)** — a fixed Three.js tunnel of
+  instanced cloud billboards with the owned sprite in `public/media`. It advances autonomously,
+  then fades and translates upward beneath an off-black strip wipe as the gap section arrives.
 - **Standalone mark (`components/brand/CalAltonMark`)** — the traced SVG for small logo
   placements. Its CSS spectrum-hover is available but the hero does not use it.
 

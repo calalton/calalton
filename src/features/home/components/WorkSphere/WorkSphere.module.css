@@ -1,0 +1,276 @@
+.section {
+  position: relative;
+  overflow: clip;
+  isolation: isolate;
+  background: var(--color-paper, #f4f2ee);
+  color: var(--color-portal-ink, #0a0a0a);
+}
+
+/* --- Desktop / large screens: globe + a heading that spreads on scroll --- */
+.desktop {
+  display: block;
+}
+
+.featuredInner {
+  position: relative;
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: calc(
+    var(--size-work-featured-globe) +
+      (var(--space-work-featured-bottom) * 1.75) +
+      (var(--space-work-featured-buffer) * 2) + 50vh
+  );
+  padding-top: 50vh;
+  padding-right: var(--size-work-featured-gap);
+  padding-bottom: var(--space-work-featured-bottom);
+  padding-left: var(--size-work-featured-gap);
+}
+
+.headingWrap {
+  position: sticky;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  width: 30%; /* fallback; the script measures and drives the real width */
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-work-featured-gap);
+  transform: translateY(-50%);
+  pointer-events: none;
+  will-change: width;
+}
+
+.headingWrap[data-work-end="true"] {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.headingWrap[data-work-end="true"] .heading {
+  display: none;
+}
+
+.headingWrap[data-work-end="true"] .headingLinkWrap {
+  display: block;
+}
+
+.heading {
+  font-family: var(--font-sans);
+  font-variation-settings: "wdth" 120;
+  font-size: 6.25rem;
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: 0;
+  color: var(--color-portal-ink, #0a0a0a);
+  white-space: nowrap;
+}
+
+.headingLinkWrap {
+  display: none;
+  font-family: var(--font-sans);
+  font-variation-settings: "wdth" 120;
+  font-size: 6.25rem;
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: 0;
+  color: var(--color-portal-ink, #0a0a0a);
+  white-space: nowrap;
+}
+
+/* "All Works" is a real link even though the surrounding heading is decorative. */
+.headingLink {
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.headingLink::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0.04em;
+  left: 0;
+  height: 0.055em;
+  background: currentColor;
+  transition: height var(--dur-fast) var(--ease-out-soft);
+}
+
+.headingLink:hover::after,
+.headingLink:focus-visible::after {
+  height: 0.09em;
+}
+
+.stage {
+  position: relative;
+  width: var(--size-work-featured-globe);
+  height: var(--size-work-featured-globe);
+  margin-top: var(--space-work-featured-globe-top);
+}
+
+.featuredGlobe {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.databaseWrap {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+
+.database {
+  position: absolute;
+  inset: 0;
+}
+
+.databaseItem {
+  display: block;
+}
+
+.databaseImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+  touch-action: none;
+}
+
+/* --- Mobile / tablet: a horizontal work reel, no globe --- */
+.mSection {
+  display: none;
+}
+
+@media (max-width: 991px) {
+  .desktop {
+    display: none;
+  }
+
+  .mSection {
+    display: block;
+    position: relative;
+    height: 300svh;
+  }
+
+  .mSticky {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  .mHeading {
+    position: absolute;
+    inset: auto 0;
+    top: 50%;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    height: calc(70svh * var(--m-heading-scale, 1));
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .mSection[data-work-end="true"] .mHeading {
+    justify-content: center;
+  }
+
+  .mHeadingText,
+  .mHeadingLink {
+    font-family: var(--font-sans);
+    font-variation-settings: "wdth" 120;
+    font-size: clamp(2.5rem, 12vw, 3.5rem);
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: 0;
+    color: var(--color-portal-ink, #0a0a0a);
+    white-space: nowrap;
+  }
+
+  .mHeadingLink {
+    display: none;
+  }
+
+  .mSection[data-work-end="true"] .mHeadingText {
+    display: none;
+  }
+
+  .mSection[data-work-end="true"] .mHeadingLink {
+    display: block;
+  }
+
+  .mStripViewport {
+    position: relative;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .mStrip {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 0.75rem;
+    padding-inline: 1rem;
+    will-change: transform;
+  }
+
+  .mItem {
+    flex: 0 0 auto;
+    height: 26svh;
+    aspect-ratio: 325 / 218;
+    overflow: hidden;
+  }
+
+  .mImg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+/* Reduced motion on small screens: a plain, statically scrollable reel. */
+@media (max-width: 991px) and (prefers-reduced-motion: reduce) {
+  .mSection {
+    height: auto;
+  }
+
+  .mSticky {
+    position: static;
+    flex-direction: column;
+    gap: 2rem;
+    height: auto;
+    padding-block: 4rem;
+    overflow: visible;
+  }
+
+  .mHeading {
+    position: static;
+    flex-direction: row;
+    gap: 1rem;
+    height: auto;
+    transform: none;
+  }
+
+  .mStripViewport {
+    overflow-x: auto;
+  }
+}

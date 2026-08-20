@@ -1,18 +1,17 @@
-/* Transparent 2D glass layer. It sits above the global film grain while the
-   remainder of the hero remains textured. */
-
 .canvas {
   position: fixed;
   inset: 0;
+  z-index: 66;
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
-  z-index: 66;
   pointer-events: none;
   opacity: calc(1 - var(--footer-active, 0));
   will-change: opacity;
 }
 
-:global(html[data-hero-particles-active="true"]) .canvas {
-  z-index: 55;
+@media (prefers-reduced-motion: reduce) {
+  .canvas {
+    position: absolute;
+  }
 }

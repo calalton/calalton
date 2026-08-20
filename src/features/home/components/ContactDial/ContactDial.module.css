@@ -1,0 +1,170 @@
+.dial {
+  position: relative;
+  width: var(--contact-dial-size, min(32rem, 84vw));
+  aspect-ratio: 1;
+  margin-inline: auto;
+  color: var(--color-ink);
+}
+
+/* White rotary plate with a thin ink outer ring (reference: 0.5px black edge). */
+.plate {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--color-paper);
+  border: 1px solid color-mix(in srgb, var(--color-ink) 78%, transparent);
+  box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.45);
+}
+
+/* The finger-wheel carries the holes and spins when a number is dialled; the
+   plate underneath stays fixed. */
+.wheel {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+}
+
+/* Nine finger-holes: flat light discs punched into the white plate (no ring). */
+.hole {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 15.6%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-paper) 91%, var(--color-ink));
+  transform: translate(-50%, -50%);
+}
+
+.holeLink {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out-soft);
+}
+
+.holeLink:hover,
+.holeLink:focus-visible {
+  background: color-mix(in srgb, var(--color-paper) 84%, var(--color-ink));
+  outline: none;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 28%;
+  color: var(--color-ink);
+  transition: transform var(--dur-fast) var(--ease-out-soft);
+}
+
+.holeLink:hover .icon,
+.holeLink:focus-visible .icon {
+  transform: scale(1.12);
+}
+
+.icon svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Finger-stop hook resting lower-right, in the open gap of the hole arc. */
+.decor {
+  position: absolute;
+  left: 77.3%;
+  top: 62.5%;
+  width: 16.8%;
+  pointer-events: none;
+}
+
+.decorSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.decorHalo {
+  fill: var(--color-paper);
+  stroke: var(--color-paper);
+  stroke-width: 8;
+}
+
+.decorBody {
+  fill: var(--color-ink);
+}
+
+/* Center: a black hub carrying the "People" mark and the hovered-link label. */
+.center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 55%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.hub {
+  display: grid;
+  place-items: center;
+  width: 93%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--color-ink);
+}
+
+.label {
+  grid-area: 1 / 1;
+  max-width: 82%;
+  margin: 0;
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  font-size: clamp(0.9rem, 2.4vw, 1.1rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  text-align: center;
+  text-transform: lowercase;
+  opacity: 0;
+  filter: blur(0.5rem);
+  transition:
+    opacity var(--dur-base) var(--ease-out-soft),
+    filter var(--dur-base) var(--ease-out-soft);
+}
+
+.label[data-visible="true"] {
+  opacity: 1;
+  filter: blur(0);
+}
+
+.people {
+  grid-area: 1 / 1;
+  color: var(--color-paper);
+  font-family: var(--font-display);
+  font-variation-settings: "wdth" 120;
+  font-size: clamp(1.4rem, 4.4vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  transition: opacity var(--dur-base) var(--ease-out-soft);
+}
+
+.people[data-hidden="true"] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .label,
+  .people,
+  .icon {
+    transition: none;
+  }
+
+  .label {
+    filter: none;
+  }
+}

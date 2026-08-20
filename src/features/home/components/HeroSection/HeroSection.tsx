@@ -1,18 +1,14 @@
-import { FloatingStickers } from "../FloatingStickers/FloatingStickers";
 import { EntryScrambleText } from "../EntryScrambleText/EntryScrambleText";
 import { HeroBackdrop } from "../HeroBackdrop/HeroBackdrop";
-import { HeroDotOverlay } from "../HeroDotOverlay/HeroDotOverlay";
 import { HeroGlass2D } from "../HeroGlass2D/HeroGlass2D";
-import { HeroTelemetry } from "../HeroTelemetry/HeroTelemetry";
-import { SpinningGlobe } from "@/components/brand/SpinningGlobe/SpinningGlobe";
+import { HeroPointerField } from "../HeroPointerField/HeroPointerField";
 import { heroContent } from "@/content/hero";
 import styles from "./HeroSection.module.css";
 
 /**
- * Landing hero. Server component. Layout mirrors the reference hero: a top
- * intro, a bottom-left statement over the centred glass mark, and a bottom
- * telemetry row. The mark is the frosted-glass
- * `HeroGlass2D` WebGL layer; `HeroBackdrop` paints the dark volumetric bands.
+ * The fixed glass mark stays centred while the one-viewport section supplies
+ * scroll progress. The following section is revealed through the mark as it
+ * approaches the camera and bends around the frame.
  */
 export function HeroSection() {
   return (
@@ -21,36 +17,35 @@ export function HeroSection() {
       data-hero-banner="true"
       aria-labelledby="hero-heading"
     >
+      <HeroPointerField />
       <HeroBackdrop />
       <HeroGlass2D />
-      <FloatingStickers />
-      <HeroDotOverlay />
-
-      <header className={styles.topbar}>
-        <div className={styles.brand}>
-          <p className={styles.intro}>
-            <EntryScrambleText
-              text={heroContent.intro}
-              startDelayMs={300}
-              letterDelayMs={10}
-            />
-          </p>
-        </div>
-      </header>
 
       <div className={styles.bottombar}>
-        <h1 id="hero-heading" className={styles.statement}>
-          {heroContent.statement.map((line, index) => (
+        <h1
+          id="hero-heading"
+          className={styles.statement}
+          aria-label={heroContent.statement.join(" ")}
+        >
+          {heroContent.statement.map((line) => (
             <EntryScrambleText
               key={line}
+              className={styles.statementLine}
               text={line}
-              startDelayMs={300 + index * 200}
+              startDelayMs={400}
+              letterDelayMs={18}
             />
           ))}
         </h1>
-        <SpinningGlobe className={styles.globe} />
+        <p className={styles.scrollHint}>
+          <EntryScrambleText
+            text={heroContent.scrollHint}
+            startDelayMs={400}
+            letterDelayMs={24}
+            scrambleColors={false}
+          />
+        </p>
       </div>
-      <HeroTelemetry />
     </section>
   );
 }

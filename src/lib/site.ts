@@ -12,6 +12,10 @@ export const site = {
   url: "https://calalton.com",
   locale: "en_GB",
   email: "build@calalton.com",
+  projects: {
+    mancova: "https://www.mancova.co.uk/",
+    cosmale: "https://www.cosmaleimage.co.uk/",
+  },
   social: {
     instagram: "https://instagram.com/",
     linkedin: "https://linkedin.com/",

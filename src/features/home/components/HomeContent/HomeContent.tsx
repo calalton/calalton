@@ -1,12 +1,9 @@
+// client: drives the scroll-linked about and contact sequences.
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { site } from "@/lib/site";
-import { HyperspaceTransition } from "../HyperspaceTransition/HyperspaceTransition";
-import {
-  ScrollCurveImageLayer,
-  ScrollCurveImageTarget,
-} from "../ScrollCurveImage/ScrollCurveImage";
+import { ContactDial } from "@/features/home/components/ContactDial/ContactDial";
+import { WorkSphereSection } from "@/features/home/components/WorkSphere/WorkSphereSection";
 import styles from "./HomeContent.module.css";
 
 const gapImages = [
@@ -41,34 +38,17 @@ const aboutCopyLines = [
 
 const aboutCopy = aboutCopyLines.join(" ");
 
-const successStories = [
-  {
-    key: "mancova",
-    title: "Mancova",
-    href: "https://www.mancova.co.uk/",
-    image: "/work/mancova-site.png",
-    imageAlt: "Mancova website homepage",
-    year: "2026",
-    type: "Website",
-  },
-  {
-    key: "cosmale",
-    title: "Cosmale Image",
-    href: "https://www.cosmaleimage.co.uk/",
-    image: "/work/cosmale-site.png",
-    imageAlt: "Cosmale Image website homepage",
-    year: "2026",
-    type: "Website",
-  },
-] as const;
-
-const successCurveItems = successStories.map((story) => ({
-  id: `work-plane-${story.key}`,
-  src: story.image,
-}));
-
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
+}
+
+function smoothstep01(value: number) {
+  const clamped = clamp01(value);
+  return clamped * clamped * (3 - 2 * clamped);
+}
+
+function rangeProgress(value: number, start: number, end: number) {
+  return clamp01((value - start) / Math.max(end - start, 0.0001));
 }
 
 function easeOutExpo(value: number) {
@@ -170,12 +150,11 @@ function MonologAboutSection() {
       const prefersReducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
+      // Hold the gap assembly until the hero has fully scrolled past (we're
+      // inside the logo), then run it across the section's pinned range.
       const progress = prefersReducedMotion
         ? 0.88
-        : clamp01(
-            (viewportHeight * 0.5 - rect.top) /
-              Math.max(1, rect.height + viewportHeight * 0.5),
-          );
+        : clamp01(-rect.top / Math.max(1, rect.height - viewportHeight));
 
       visibleRef.current = rect.bottom > 0 && rect.top < viewportHeight;
       applyProgress(progress);
@@ -210,6 +189,7 @@ function MonologAboutSection() {
     <section
       ref={sectionRef}
       className={styles.about}
+      id="about"
       data-about-section="true"
       aria-label="About Cal Alton"
     >
@@ -223,7 +203,7 @@ function MonologAboutSection() {
           <div
             className={`${styles.aboutHeadingContain} ${styles.aboutHeadingContainRight}`}
           >
-            <GapHeading text="THAT GAP" side="right" />
+            <GapHeading text="THE GAP" side="right" />
           </div>
         </div>
 
@@ -252,60 +232,6 @@ function MonologAboutSection() {
   );
 }
 
-function SuccessStoriesSection() {
-  return (
-    <section
-      id="selected-work"
-      className={styles.success}
-      aria-label="Success stories"
-    >
-      <ScrollCurveImageLayer items={successCurveItems} />
-
-      <div className={styles.successGrid}>
-        {successStories.map((story, index) => (
-          <article
-            key={story.key}
-            className={`${styles.successItem} ${
-              index === 0
-                ? styles.successItemFeature
-                : styles.successItemSecondary
-            }`}
-            data-success-story="true"
-          >
-            <a
-              href={story.href}
-              target="_blank"
-              rel="noreferrer"
-              className={styles.successLink}
-              aria-label={`${story.title} - ${story.year}`}
-            >
-              <ScrollCurveImageTarget
-                id={`work-plane-${story.key}`}
-                src={story.image}
-                alt={story.imageAlt}
-                sizes={
-                  "(min-width: 1025px) 50vw, (min-width: 768px) 75vw, 100vw"
-                }
-                className={styles.successCover}
-              />
-
-              <div className={styles.successMeta}>
-                <h2 className={styles.successStoryTitle}>{story.title}</h2>
-                <div className={styles.successMetaDetail}>
-                  <span>{story.year}</span>
-                  <span>
-                    {story.type} <span aria-hidden="true">↗</span>
-                  </span>
-                </div>
-              </div>
-            </a>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function ContactSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
 
@@ -322,34 +248,22 @@ function ContactSection() {
       const reducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
-      const traverseProgress = reducedMotion
-        ? 0
-        : clamp01(
-            (viewportHeight - rect.top) /
-              Math.max(1, rect.height + viewportHeight),
-          );
-      const clipStart = viewportHeight * 0.5;
-      const clipEnd = rect.height * 0.1;
-      const clipProgress = reducedMotion
-        ? 0
-        : clamp01((clipStart - rect.bottom) / Math.max(1, clipStart - clipEnd));
-      const active = rect.top < viewportHeight && rect.bottom > 0;
+      const inView = rect.top < viewportHeight && rect.bottom > 0;
+      const progress = reducedMotion
+        ? Number(inView)
+        : clamp01((viewportHeight - rect.top) / Math.max(rect.height, 1));
+      const statementOpacity = reducedMotion
+        ? Number(inView)
+        : smoothstep01(rangeProgress(progress, 0.02, 0.16));
 
       section.style.setProperty(
-        "--contact-push-x",
-        `${(traverseProgress * 50).toFixed(3)}%`,
+        "--contact-statement-opacity",
+        statementOpacity.toFixed(4),
       );
-      section.style.setProperty(
-        "--contact-clip-inset",
-        `${(clipProgress * 1.25).toFixed(4)}%`,
-      );
+      const active = inView && progress > 0;
       section.dataset.contactActive = active ? "true" : "false";
       document.documentElement.style.setProperty(
         "--footer-active",
-        active ? "1" : "0",
-      );
-      document.documentElement.style.setProperty(
-        "--footer-entry-progress",
         active ? "1" : "0",
       );
       document.documentElement.dataset.footerActive = active ? "true" : "false";
@@ -369,7 +283,6 @@ function ContactSection() {
       window.removeEventListener("cal-scroll-stage", schedule);
       window.removeEventListener("resize", schedule);
       document.documentElement.style.removeProperty("--footer-active");
-      document.documentElement.style.removeProperty("--footer-entry-progress");
       delete document.documentElement.dataset.footerActive;
     };
   }, []);
@@ -382,44 +295,15 @@ function ContactSection() {
       aria-label="Contact"
       data-contact-active="false"
     >
-      <div className={styles.contactSticky}>
-        <h2 className={styles.contactStatement}>
-          <span className={`${styles.contactLine} ${styles.contactBuild}`}>
-            Let&apos;s build
-          </span>
-          <span className={`${styles.contactLine} ${styles.contactExperience}`}>
-            an experience
-          </span>
-          <span className={`${styles.contactLine} ${styles.contactMoves}`}>
-            That moves
-          </span>
-          <span className={styles.contactPushLine}>
-            <span className={styles.contactArrow} aria-hidden="true">
-              →
-            </span>
-            <span>People</span>
-          </span>
+      <div className={styles.contactInner}>
+        <h2 className={styles.statement}>
+          <span>Let&apos;s build</span>
+          <span>an experience</span>
+          <span>that moves</span>
         </h2>
 
-        <div className={styles.contactLinks}>
-          <div>
-            <a href={`mailto:${site.email}`}>{site.email}</a>
-          </div>
-          <div className={styles.socials}>
-            <a href="https://x.com/calalton" target="_blank" rel="noreferrer">
-              Twitter/X
-            </a>
-            <a
-              href="https://github.com/calalton"
-              target="_blank"
-              rel="noreferrer"
-            >
-              GitHub
-            </a>
-            <a href="https://calalton.cc" target="_blank" rel="noreferrer">
-              Web
-            </a>
-          </div>
+        <div className={styles.dialWrap}>
+          <ContactDial />
         </div>
       </div>
     </footer>
@@ -430,8 +314,7 @@ export function HomeContent() {
   return (
     <div className={styles.root}>
       <MonologAboutSection />
-      <SuccessStoriesSection />
-      <HyperspaceTransition />
+      <WorkSphereSection />
       <ContactSection />
     </div>
   );
