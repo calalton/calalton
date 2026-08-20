@@ -2,7 +2,7 @@
 // center; clicking spins the finger-wheel round to the stop, then dials the link.
 "use client";
 
-import type { CSSProperties, MouseEvent, ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { site } from "@/lib/site";
@@ -54,15 +54,6 @@ const HOLE_LINKS: Record<number, DialLink> = {
     icon: <GlobeIcon />,
   },
   6: { label: "send email", href: `mailto:${site.email}`, icon: <MailIcon /> },
-};
-
-// Playful ring tints on the blank finger-holes, echoing the reference dial.
-const EMPTY_RING: Record<number, string> = {
-  0: "var(--color-spectrum-3)",
-  1: "var(--color-spectrum-4)",
-  5: "var(--color-spectrum-2)",
-  7: "var(--color-spectrum-6)",
-  8: "var(--color-spectrum-1)",
 };
 
 // Curved center label; repeats so it reads as a continuous ring while it spins.
@@ -161,15 +152,11 @@ export function ContactDial({ className }: { className?: string }) {
           const link = HOLE_LINKS[index];
           const style = { left: `${pos.x}%`, top: `${pos.y}%` };
           if (!link) {
-            const ringColor = EMPTY_RING[index];
-            const holeStyle = ringColor
-              ? ({ ...style, "--ring": ringColor } as CSSProperties)
-              : style;
             return (
               <span
                 key={index}
                 className={styles.hole}
-                style={holeStyle}
+                style={style}
                 aria-hidden="true"
               />
             );

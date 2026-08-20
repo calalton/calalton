@@ -6,14 +6,13 @@
   color: var(--color-ink);
 }
 
-/* White rotary plate with a thin ink outer ring (reference: 0.5px black edge). */
+/* White rotary plate with the reference's crisp 0.5px black outer ring. */
 .plate {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: var(--color-paper);
-  border: 1px solid color-mix(in srgb, var(--color-ink) 78%, transparent);
-  box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.45);
+  background: var(--color-portal-matte);
+  border: 0.5px solid var(--color-portal-ink);
 }
 
 /* The finger-wheel carries the holes and spins when a number is dialled; the
@@ -24,8 +23,7 @@
   transform-origin: 50% 50%;
 }
 
-/* Nine finger-holes: glossy pillow buttons with a thin inner ring line, per the
-   reference dial. */
+/* Nine flat finger-holes: white plate punched to a 5% ink disc (no pillow). */
 .hole {
   position: absolute;
   display: grid;
@@ -33,27 +31,21 @@
   width: 15.6%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 34%,
-    #ffffff 0%,
-    #f2efe7 56%,
-    #e3dfd5 100%
+  background: color-mix(
+    in srgb,
+    var(--color-portal-ink) 5%,
+    var(--color-portal-matte)
   );
-  box-shadow:
-    0 0.3rem 0.55rem rgba(0, 0, 0, 0.12),
-    inset 0 0.05rem 0.03rem rgba(255, 255, 255, 0.9),
-    inset 0 -0.14rem 0.28rem rgba(0, 0, 0, 0.05);
   transform: translate(-50%, -50%);
 }
 
-/* Thin inner ring line on the blank holes (tinted via --ring). */
+/* Blank holes carry the reference's small 1px grey ring (~34% of the hole). */
 .hole:not(.holeLink)::after {
   content: "";
   position: absolute;
-  inset: 19%;
+  inset: 33%;
   border-radius: 50%;
-  border: 1.5px solid
-    var(--ring, color-mix(in srgb, var(--color-ink) 22%, transparent));
+  border: 1px solid #bec1ca;
   pointer-events: none;
 }
 
@@ -66,11 +58,10 @@
 
 .holeLink:hover,
 .holeLink:focus-visible {
-  background: radial-gradient(
-    circle at 50% 34%,
-    #ffffff 0%,
-    #f7f4ed 58%,
-    #ebe7dd 100%
+  background: color-mix(
+    in srgb,
+    var(--color-portal-ink) 9%,
+    var(--color-portal-matte)
   );
   outline: none;
 }
@@ -79,7 +70,7 @@
   display: grid;
   place-items: center;
   width: 28%;
-  color: var(--color-ink);
+  color: var(--color-portal-ink);
   transition: transform var(--dur-fast) var(--ease-out-soft);
 }
 
@@ -110,13 +101,13 @@
 }
 
 .decorHalo {
-  fill: var(--color-paper);
-  stroke: var(--color-paper);
-  stroke-width: 8;
+  fill: var(--color-portal-matte);
+  stroke: var(--color-portal-matte);
+  stroke-width: 8.89;
 }
 
 .decorBody {
-  fill: var(--color-ink);
+  fill: var(--color-portal-ink);
 }
 
 /* Center: a black hub carrying the "People" mark and the hovered-link label. */
@@ -138,7 +129,8 @@
   width: 93%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: var(--color-ink);
+  background: var(--color-portal-ink);
+  border: 0.5px solid var(--color-portal-ink);
 }
 
 .label {

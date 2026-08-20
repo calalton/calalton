@@ -7,7 +7,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: var(--color-portal-matte);
+  background: var(--color-void);
   scrollbar-width: none;
   touch-action: pan-y;
 }
@@ -37,7 +37,7 @@
 .stageBackdrop {
   z-index: 0;
   opacity: 1;
-  background: var(--color-portal-matte);
+  background: var(--color-void);
   will-change: opacity;
 }
 

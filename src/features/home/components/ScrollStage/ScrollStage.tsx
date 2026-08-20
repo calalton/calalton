@@ -120,48 +120,6 @@ export function ScrollStage({ children }: PropsWithChildren) {
     const content = contentRef.current;
     if (!wrapper || !content) return;
 
-    let rafId = 0;
-
-    const showThenHide = () => {
-      publishMetrics(true);
-      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = window.setTimeout(
-        () => publishMetrics(false),
-        2000,
-      );
-    };
-
-    // Lenis' synthetic touch scrolling can stall the hero matte on phones, so
-    // touch / small-screen devices fall back to native scrolling while still
-    // publishing the same metrics that drive the hero reveal.
-    const nativeScroll = window.matchMedia(
-      "(pointer: coarse), (max-width: 47.999rem)",
-    ).matches;
-
-    if (nativeScroll) {
-      wrapper.scrollTop = 0;
-      let ticking = false;
-      const onScroll = () => {
-        if (ticking) return;
-        ticking = true;
-        rafId = window.requestAnimationFrame(() => {
-          ticking = false;
-          showThenHide();
-        });
-      };
-      const onResize = () => publishMetrics(false);
-      wrapper.addEventListener("scroll", onScroll, { passive: true });
-      window.addEventListener("resize", onResize);
-      publishMetrics(false);
-
-      return () => {
-        if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
-        window.cancelAnimationFrame(rafId);
-        wrapper.removeEventListener("scroll", onScroll);
-        window.removeEventListener("resize", onResize);
-      };
-    }
-
     const lenis = new Lenis({
       wrapper,
       content,
@@ -175,6 +133,16 @@ export function ScrollStage({ children }: PropsWithChildren) {
     wrapper.scrollTop = 0;
     lenis.scrollTo(0, { immediate: true, force: true });
     lenisRef.current = lenis;
+    let rafId = 0;
+
+    const showThenHide = () => {
+      publishMetrics(true);
+      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = window.setTimeout(
+        () => publishMetrics(false),
+        2000,
+      );
+    };
 
     const unsubscribe = lenis.on("scroll", showThenHide);
     const raf = (time: number) => {

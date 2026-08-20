@@ -15,3 +15,13 @@
     position: absolute;
   }
 }
+
+/* On touch devices the shader reveal can lag, so fade the whole matte out as the
+   hero scrolls away — it must never sit as a white overlay across the page. */
+@media (pointer: coarse) {
+  .canvas {
+    opacity: calc(
+      (1 - var(--footer-active, 0)) * (1 - var(--hero-exit-progress, 0))
+    );
+  }
+}
