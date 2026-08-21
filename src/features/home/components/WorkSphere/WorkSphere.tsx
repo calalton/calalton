@@ -389,9 +389,9 @@ export function WorkSphere({ className }: WorkSphereProps) {
     window.addEventListener("touchmove", releasePin, { passive: true });
 
     const clock = new THREE.Clock();
-    let running = true;
+    let running = false;
     let raf = 0;
-    const startTime = performance.now();
+    let startTime = 0;
 
     const loop = () => {
       if (!running) return;
@@ -542,11 +542,36 @@ export function WorkSphere({ className }: WorkSphereProps) {
       hoverMeshes = tiles.filter((t) => t.hoverable).map((t) => t.mesh);
       renderer.render(scene, camera);
     };
-    raf = requestAnimationFrame(loop);
-
-    return () => {
+    const start = () => {
+      if (running) return;
+      running = true;
+      if (!startTime) startTime = performance.now();
+      raf = requestAnimationFrame(loop);
+    };
+    const stop = () => {
       running = false;
       cancelAnimationFrame(raf);
+    };
+
+    // Pause the globe (raycast + render) whenever the work section is off screen.
+    const workSection = canvas.closest("[data-work-section]");
+    let visObserver: IntersectionObserver | null = null;
+    if (workSection) {
+      visObserver = new IntersectionObserver(
+        ([entry]) => {
+          if (entry?.isIntersecting) start();
+          else stop();
+        },
+        { rootMargin: "25% 0px 25% 0px", threshold: 0 },
+      );
+      visObserver.observe(workSection);
+    } else {
+      start();
+    }
+
+    return () => {
+      stop();
+      visObserver?.disconnect();
       resizeObserver.disconnect();
       window.removeEventListener("resize", resize);
       window.removeEventListener("wheel", releasePin);

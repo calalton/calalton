@@ -20,6 +20,11 @@ type GooTextProps = {
   trigger?: boolean;
   /** After revealing, reverse the goo and fade out as the hero scrolls away. */
   exit?: boolean;
+  /** Reveal once, then hold sharp — for pinned copy like the nav. */
+  persist?: boolean;
+  /** Controlled goo: true = goo in, false = goo out. Drives pinned copy from an
+   *  external scroll signal instead of its own viewport crossing. */
+  show?: boolean;
   /** Slide up by this many px while revealing. */
   rise?: number;
 };
@@ -33,13 +38,18 @@ export function GooText({
   delay = 0,
   trigger,
   exit = false,
+  persist = false,
+  show,
   rise = 0,
 }: GooTextProps) {
   const rootRef = useRef<HTMLSpanElement | null>(null);
   const blurRef = useRef<SVGFEGaussianBlurElement | null>(null);
-  const revealRef = useRef<(() => void) | null>(null);
+  const showInRef = useRef<(() => void) | null>(null);
+  const showOutRef = useRef<(() => void) | null>(null);
+  const shownRef = useRef(false);
   const filterId = `goo-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const usesTrigger = trigger !== undefined;
+  const usesShow = show !== undefined;
 
   useEffect(() => {
     const root = rootRef.current;
@@ -50,116 +60,187 @@ export function GooText({
     // Blur scales with text size so every heading reads equally blobby.
     const fontSize = Number.parseFloat(getComputedStyle(root).fontSize) || 16;
     const start = amount ?? Math.max(3, fontSize * 0.4);
-
-    blur.setAttribute("stdDeviation", start.toFixed(2));
-    root.style.filter = `url(#${filterId})`;
-    if (rise) root.style.transform = `translateY(${rise}px)`;
+    // Blob ceiling, capped so big headings don't rasterise huge blur filters.
+    const peak = Math.min(start * 2 + 12, 40);
+    const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
     let raf = 0;
-    let revealed = false;
-    let removeExit: (() => void) | null = null;
+    let filterOn = false;
+    let lastStd = -1;
+    const setFilter = (on: boolean) => {
+      if (on === filterOn) return;
+      root.style.filter = on ? `url(#${filterId})` : "";
+      filterOn = on;
+    };
+    const setStd = (sd: number) => {
+      const q = Math.round(Math.max(0, sd) * 2) / 2;
+      if (q !== lastStd) {
+        blur.setAttribute("stdDeviation", q.toFixed(1));
+        lastStd = q;
+      }
+    };
 
-    // Exit blob grows from 0 — starting it at `start` made the copy snap out
-    // abruptly the instant the scroll crossed zero instead of gooing away.
-    const maxExitBlur = start * 2 + 12;
-    const exitProgress = () => {
-      const raw =
+    // Fixed hero copy dissolves on the hero's scroll-away progress (it can't
+    // cross the viewport itself); the value comes off the scroll event detail
+    // so there's no per-frame getComputedStyle flush.
+    if (exit) {
+      setFilter(true);
+      setStd(peak);
+      let remove: (() => void) | null = null;
+      const readFallback = () =>
         Number.parseFloat(
           getComputedStyle(document.documentElement).getPropertyValue(
             "--hero-exit-progress",
           ),
         ) || 0;
-      return Math.min(1, Math.max(0, raw));
-    };
-
-    // After revealing, drive the reverse goo + fade from hero-exit-progress.
-    const startExit = () => {
-      const onScroll = () => {
-        const p = exitProgress();
-        if (p <= 0.001) {
-          root.style.filter = "";
-          root.style.opacity = "";
-          return;
-        }
+      const frame = (detail?: { heroExitProgress?: number } | null) => {
+        const p = clamp01(detail ? detail.heroExitProgress ?? 0 : readFallback());
         const eased = p * (2 - p);
-        blur.setAttribute("stdDeviation", (eased * maxExitBlur).toFixed(3));
-        root.style.filter = `url(#${filterId})`;
-        root.style.opacity = (1 - eased).toFixed(3);
+        setStd(eased * peak);
+        setFilter(eased > 0.002);
+        root.style.opacity = eased > 0.002 ? (1 - eased).toFixed(3) : "";
       };
-      window.addEventListener("cal-scroll-stage", onScroll);
-      onScroll();
-      removeExit = () =>
-        window.removeEventListener("cal-scroll-stage", onScroll);
-    };
-
-    const reveal = () => {
-      if (revealed) return;
-      revealed = true;
+      const onScroll = (event: Event) => frame((event as CustomEvent).detail);
       const startAt = performance.now() + delay;
-      const tick = (now: number) => {
-        const t = Math.min(1, Math.max(0, (now - startAt) / duration));
-        const eased = 1 - Math.pow(1 - t, 3);
-        // Blend the reveal blur with any scroll-driven exit blur so scrolling
-        // mid-reveal stays seamless instead of jumping when the exit arms.
-        let sd = start * (1 - eased);
-        if (exit) {
-          const p = exitProgress();
-          const e = p * (2 - p);
-          sd += e * maxExitBlur;
-          root.style.opacity = e > 0 ? (1 - e).toFixed(3) : "";
+      const introStep = (now: number) => {
+        const t = clamp01((now - startAt) / duration);
+        setStd(peak * Math.pow(1 - t, 3));
+        setFilter(t < 0.999);
+        if (t < 1) {
+          raf = window.requestAnimationFrame(introStep);
+        } else {
+          window.addEventListener("cal-scroll-stage", onScroll);
+          frame();
+          remove = () =>
+            window.removeEventListener("cal-scroll-stage", onScroll);
         }
-        blur.setAttribute("stdDeviation", sd.toFixed(3));
-        if (rise) {
-          root.style.transform = `translateY(${(rise * (1 - eased)).toFixed(2)}px)`;
+      };
+      const arm = () => {
+        raf = window.requestAnimationFrame(introStep);
+      };
+      const entryState = document.documentElement.dataset.entryState;
+      if (entryState === "content" || entryState === "ready") arm();
+      else window.addEventListener("cal-entry-content", arm, { once: true });
+      return () => {
+        window.removeEventListener("cal-entry-content", arm);
+        remove?.();
+        if (raf) window.cancelAnimationFrame(raf);
+      };
+    }
+
+    // Flowing copy goos in and out as it crosses the viewport, over a fixed
+    // duration so the melt is clearly visible at any scroll speed. It carries
+    // no filter at rest — sharp while on screen, hidden off it — so only the
+    // one or two elements mid-transition ever pay the blur cost.
+    root.style.opacity = "0";
+    if (rise) root.style.transform = `translateY(${rise}px)`;
+
+    const run = (into: boolean) => {
+      if (raf) window.cancelAnimationFrame(raf);
+      setFilter(true);
+      const from = into ? peak : 0;
+      const to = into ? 0 : peak;
+      const dur = into ? duration : Math.round(duration * 0.85);
+      const startAt = performance.now() + (into ? delay : 0);
+      const step = (now: number) => {
+        const t = clamp01((now - startAt) / dur);
+        const eased = 1 - Math.pow(1 - t, 3);
+        setStd(from + (to - from) * eased);
+        root.style.opacity = (into ? eased : 1 - eased).toFixed(3);
+        // Rise is an entrance flourish only — never slide on the way out.
+        if (rise && into) {
+          root.style.transform = `translateY(${(rise * (1 - eased)).toFixed(1)}px)`;
         }
         if (t < 1) {
-          raf = window.requestAnimationFrame(tick);
-        } else {
+          raf = window.requestAnimationFrame(step);
+          return;
+        }
+        setFilter(false);
+        if (into) {
+          root.style.opacity = "";
           if (rise) root.style.transform = "";
-          if (exit) startExit();
-          else root.style.filter = "";
+        } else {
+          root.style.opacity = "0";
         }
       };
-      raf = window.requestAnimationFrame(tick);
+      raf = window.requestAnimationFrame(step);
     };
-    revealRef.current = reveal;
 
-    // Reveal once past the entry loader — on scroll-in, unless a trigger drives it.
-    let observer: IntersectionObserver | null = null;
-    const arm = () => {
-      if (usesTrigger) return;
-      observer = new IntersectionObserver(
+    // Controlled by a parent scroll signal (about copy, pinned): the [show]
+    // effect drives goo-in / goo-out so it melts in place instead of sliding
+    // away with its sticky container.
+    if (usesShow) {
+      showInRef.current = () => run(true);
+      showOutRef.current = () => run(false);
+      return () => {
+        if (raf) window.cancelAnimationFrame(raf);
+      };
+    }
+
+    let inView = false;
+    let io: IntersectionObserver | null = null;
+    const observe = () => {
+      io = new IntersectionObserver(
         (entries) => {
-          if (entries.some((entry) => entry.isIntersecting)) {
-            reveal();
-            observer?.disconnect();
+          const entry = entries[entries.length - 1];
+          if (!entry) return;
+          if (entry.isIntersecting && !inView) {
+            inView = true;
+            run(true);
+          } else if (!entry.isIntersecting && inView) {
+            inView = false;
+            run(false);
           }
         },
-        { threshold: 0.2 },
+        { rootMargin: "-15% 0px -15% 0px", threshold: 0 },
       );
-      observer.observe(root);
+      io.observe(root);
+    };
+
+    const arm = () => {
+      if (persist) {
+        run(true);
+        return;
+      }
+      observe();
+    };
+    const ready = () => {
+      if (usesTrigger && !trigger) return;
+      arm();
     };
 
     const entryState = document.documentElement.dataset.entryState;
-    if (entryState === "content" || entryState === "ready") {
-      arm();
-    } else {
-      window.addEventListener("cal-entry-content", arm, { once: true });
-    }
+    if (entryState === "content" || entryState === "ready") ready();
+    else window.addEventListener("cal-entry-content", ready, { once: true });
 
     return () => {
-      window.removeEventListener("cal-entry-content", arm);
-      observer?.disconnect();
-      removeExit?.();
-      revealRef.current = null;
+      window.removeEventListener("cal-entry-content", ready);
+      io?.disconnect();
       if (raf) window.cancelAnimationFrame(raf);
     };
-  }, [amount, duration, delay, filterId, exit, usesTrigger, rise]);
+  }, [
+    amount,
+    duration,
+    delay,
+    filterId,
+    exit,
+    persist,
+    usesShow,
+    usesTrigger,
+    trigger,
+    rise,
+  ]);
 
-  // A trigger flipping true reveals immediately.
+  // Controlled goo: drive in / out from the `show` prop.
   useEffect(() => {
-    if (trigger) revealRef.current?.();
-  }, [trigger]);
+    if (show === undefined) return;
+    if (show) {
+      shownRef.current = true;
+      showInRef.current?.();
+    } else if (shownRef.current) {
+      showOutRef.current?.();
+    }
+  }, [show]);
 
   return (
     <span ref={rootRef} className={className} style={style}>

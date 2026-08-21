@@ -3,12 +3,11 @@
 
 import Link from "next/link";
 import type { MouseEvent } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { navLinks } from "@/content/hero";
 import { GooText } from "@/components/effects/GooText/GooText";
 import { useScrollStage } from "@/features/home/components/ScrollStage/ScrollStage";
-import { MenuScrambleText } from "./MenuScrambleText";
-import { MenuTransitionCanvas } from "./MenuTransitionCanvas";
+import { MenuGooBackdrop } from "./MenuGooBackdrop";
 import styles from "./SiteNav.module.css";
 
 /**
@@ -19,7 +18,7 @@ import styles from "./SiteNav.module.css";
 export function SiteNav() {
   const scrollStage = useScrollStage();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [backdropMounted, setBackdropMounted] = useState(false);
+  const [menuRendered, setMenuRendered] = useState(false);
 
   useEffect(() => {
     document.documentElement.dataset.mobileMenuOpen = menuOpen
@@ -30,12 +29,15 @@ export function SiteNav() {
     };
   }, [menuOpen]);
 
-  const handleBackdropComplete = useCallback((open: boolean) => {
-    if (!open) setBackdropMounted(false);
-  }, []);
+  // Keep the panel mounted through the close so its links can goo back out.
+  useEffect(() => {
+    if (menuOpen || !menuRendered) return;
+    const timer = window.setTimeout(() => setMenuRendered(false), 720);
+    return () => window.clearTimeout(timer);
+  }, [menuOpen, menuRendered]);
 
   const handleMenuToggle = () => {
-    if (!menuOpen) setBackdropMounted(true);
+    if (!menuOpen) setMenuRendered(true);
     setMenuOpen((open) => !open);
   };
 
@@ -65,7 +67,7 @@ export function SiteNav() {
             className={styles.link}
             onClick={(event) => handleClick(event, link.href)}
           >
-            <GooText delay={index * 80}>{link.label}</GooText>
+            <GooText delay={index * 80} persist>{link.label}</GooText>
           </Link>
         ))}
       </div>
@@ -84,46 +86,41 @@ export function SiteNav() {
         <span className={styles.menuIcon} aria-hidden="true">
           <span className={`${styles.menuLine} ${styles.lineTop}`} />
           <span className={`${styles.menuLine} ${styles.lineBottom}`} />
-          <span className={`${styles.menuLine} ${styles.lineCrossA}`} />
-          <span className={`${styles.menuLine} ${styles.lineCrossB}`} />
         </span>
       </button>
 
-      {backdropMounted ? (
-        <MenuTransitionCanvas
-          className={styles.menuBackdrop}
-          open={menuOpen}
-          onComplete={handleBackdropComplete}
-        />
-      ) : null}
+      <MenuGooBackdrop open={menuOpen} />
 
-      {menuOpen ? (
-        <>
-          <div id="mobile-primary-menu" className={styles.menuPanel}>
-            <div className={styles.menuList}>
+      {menuRendered ? (
+        <div
+          id="mobile-primary-menu"
+          className={styles.menuPanel}
+          data-open={menuOpen ? "true" : "false"}
+        >
+          <div className={styles.menuList}>
+            <Link
+              href="/"
+              className={styles.menuLink}
+              onClick={() => setMenuOpen(false)}
+            >
+              <GooText delay={320} show={menuOpen}>
+                HOME
+              </GooText>
+            </Link>
+            {navLinks.map((link, index) => (
               <Link
-                href="/"
+                key={`mobile-${link.href}`}
+                href={link.href}
                 className={styles.menuLink}
-                onClick={() => setMenuOpen(false)}
+                onClick={(event) => handleClick(event, link.href)}
               >
-                <MenuScrambleText text="HOME" startDelayMs={300} />
+                <GooText delay={380 + index * 70} show={menuOpen}>
+                  {link.label}
+                </GooText>
               </Link>
-              {navLinks.map((link, index) => (
-                <Link
-                  key={`mobile-${link.href}`}
-                  href={link.href}
-                  className={styles.menuLink}
-                  onClick={(event) => handleClick(event, link.href)}
-                >
-                  <MenuScrambleText
-                    text={link.label}
-                    startDelayMs={400 + index * 100}
-                  />
-                </Link>
-              ))}
-            </div>
+            ))}
           </div>
-        </>
+        </div>
       ) : null}
     </nav>
   );

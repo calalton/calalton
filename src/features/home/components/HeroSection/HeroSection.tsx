@@ -15,6 +15,7 @@ export function HeroSection() {
     <section
       className={styles.hero}
       data-hero-banner="true"
+      data-mark-bg="light"
       aria-labelledby="hero-heading"
     >
       <HeroPointerField />

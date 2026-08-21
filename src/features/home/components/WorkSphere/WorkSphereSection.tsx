@@ -10,6 +10,7 @@ export function WorkSphereSection() {
       className={styles.section}
       aria-label="Selected work"
       data-work-section
+      data-mark-bg="light"
     >
       {/* Desktop / large screens: the globe with a heading that spreads on scroll. */}
       <div className={styles.desktop}>

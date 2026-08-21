@@ -1,4 +1,9 @@
+// client: swaps the mark dark/white to stay legible on whatever surface
+// (white matte, light cloud, white work, dark sections) sits behind it.
+"use client";
+
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { CAL_ALTON_PATH } from "@/components/brand/CalAltonMark/logo-path";
 import { cn } from "@/lib/cn";
 import styles from "./HeroGlobeMark.module.css";
@@ -17,8 +22,41 @@ const MARK_TRANSFORM =
   "translate(25.4 15.6) rotate(-10) scale(0.0122 0.008) translate(-2975 -2175)";
 
 export function HeroGlobeMark({ className }: HeroGlobeMarkProps) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const surfaces = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-mark-bg]"),
+    );
+
+    // Tone follows whichever tagged surface currently sits under the mark.
+    const update = () => {
+      const box = root.getBoundingClientRect();
+      const probeY = box.top + box.height / 2;
+      let tone = "light";
+      for (const surface of surfaces) {
+        const rect = surface.getBoundingClientRect();
+        if (rect.top <= probeY && rect.bottom > probeY) {
+          tone = surface.dataset.markBg ?? tone;
+        }
+      }
+      if (root.dataset.tone !== tone) root.dataset.tone = tone;
+    };
+
+    update();
+    window.addEventListener("cal-scroll-stage", update);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("cal-scroll-stage", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
   return (
-    <div className={cn(styles.root, className)}>
+    <div ref={rootRef} className={cn(styles.root, className)} data-tone="light">
       <Link href="/" aria-label="Cal Alton - home" className={styles.link}>
         <svg viewBox="-1 -1 53 34" className={styles.svg} aria-hidden="true">
           <defs>

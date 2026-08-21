@@ -80,10 +80,10 @@ function GapHeading({ text, side }: { text: string; side: "left" | "right" }) {
   );
 }
 
-function AboutCopy({ reveal }: { reveal: boolean }) {
+function AboutCopy({ show }: { show: boolean }) {
   return (
     <p className={styles.aboutParagraph} aria-label={aboutCopy}>
-      <GooText trigger={reveal} rise={28} style={{ display: "block" }}>
+      <GooText show={show} rise={28} style={{ display: "block" }}>
         {aboutCopyLines.map((line, index) => (
           <span key={line} className={styles.aboutCopyLine}>
             {line}
@@ -98,9 +98,9 @@ function AboutCopy({ reveal }: { reveal: boolean }) {
 function MonologAboutSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const visibleRef = useRef(false);
-  const gapCompleteRef = useRef(false);
+  const copyShowRef = useRef(false);
   const [activeImage, setActiveImage] = useState(0);
-  const [gapComplete, setGapComplete] = useState(false);
+  const [copyShow, setCopyShow] = useState(false);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -164,10 +164,13 @@ function MonologAboutSection() {
       visibleRef.current = rect.bottom > 0 && rect.top < viewportHeight;
       applyProgress(progress);
 
-      // Once the gap heading has assembled, let the about copy goo in after it.
-      if (progress >= 0.62 && !gapCompleteRef.current) {
-        gapCompleteRef.current = true;
-        setGapComplete(true);
+      // Goo the about copy in once the gap has assembled, then goo it back out
+      // (in place, while still pinned) before the section unpins so it never
+      // slides away.
+      const nextCopyShow = progress >= 0.62 && progress < 0.9;
+      if (nextCopyShow !== copyShowRef.current) {
+        copyShowRef.current = nextCopyShow;
+        setCopyShow(nextCopyShow);
       }
     };
 
@@ -202,6 +205,7 @@ function MonologAboutSection() {
       className={styles.about}
       id="about"
       data-about-section="true"
+      data-mark-bg="dark"
       aria-label="About Cal Alton"
     >
       <div className={styles.aboutSticky}>
@@ -236,7 +240,7 @@ function MonologAboutSection() {
           ))}
         </div>
         <div className={styles.aboutBottom}>
-          <AboutCopy reveal={gapComplete} />
+          <AboutCopy show={copyShow} />
         </div>
       </div>
     </section>
@@ -305,6 +309,7 @@ function ContactSection() {
       className={styles.contact}
       aria-label="Contact"
       data-contact-active="false"
+      data-mark-bg="dark"
     >
       <div className={styles.contactInner}>
         <h2 className={styles.statement}>

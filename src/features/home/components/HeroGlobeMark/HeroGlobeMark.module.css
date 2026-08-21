@@ -11,25 +11,25 @@
   opacity: 1;
   pointer-events: auto;
   transition:
+    color var(--dur-base) var(--ease-out-soft),
     filter var(--dur-base) var(--ease-out-soft),
     opacity var(--dur-base) ease,
     transform var(--dur-base) var(--ease-out-soft),
     visibility 0s linear 0s;
 }
 
+.root[data-tone="light"] {
+  color: var(--color-ink);
+}
+
+.root[data-tone="dark"] {
+  color: var(--color-paper);
+}
+
 :global(html[data-entry-state="loading"]) .root {
   opacity: 0;
   transform: translate3d(0, 0.3rem, 0) scale(0.88);
   filter: blur(3px);
-}
-
-:global(html[data-footer-active="true"]) .root {
-  visibility: hidden;
-  opacity: 0;
-  filter: blur(6px);
-  transform: translate3d(0, 0.25rem, 0) scale(0.68);
-  pointer-events: none;
-  transition-delay: 0s, 0s, 0s, var(--dur-base);
 }
 
 .link,
