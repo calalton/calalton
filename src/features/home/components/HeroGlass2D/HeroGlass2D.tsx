@@ -164,7 +164,10 @@ const LOGO_FRAG = /* glsl */ `
     // The perspective plane passes the camera during the final 10%, leaving
     // the portal fully open instead of freezing a white gap over the page.
     float terminalFade = 1.0 - smoothstep(0.90, 0.95, scroll);
-    gl_FragColor = vec4(vec3(1.0), matteAlpha * terminalFade);
+    // Premultiplied output: iOS Safari composites the canvas as premultiplied,
+    // so straight-alpha white blew the matte out. This matches desktop exactly.
+    float matte = matteAlpha * terminalFade;
+    gl_FragColor = vec4(vec3(matte), matte);
   }
 `;
 
@@ -245,7 +248,7 @@ export function HeroGlass2D({ className, fit = 0.8 }: HeroGlass2DProps) {
         canvas,
         antialias: true,
         alpha: true,
-        premultipliedAlpha: false,
+        premultipliedAlpha: true,
         powerPreference: "high-performance",
       });
     } catch (error) {
