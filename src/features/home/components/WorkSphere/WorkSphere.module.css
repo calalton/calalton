@@ -57,24 +57,26 @@
 }
 
 .heading {
-  font-family: var(--font-sans);
+  font-family: var(--font-display);
   font-variation-settings: "wdth" 120;
   font-size: 6.25rem;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 0.9;
   letter-spacing: 0;
+  text-transform: uppercase;
   color: var(--color-portal-ink, #0a0a0a);
   white-space: nowrap;
 }
 
 .headingLinkWrap {
   display: none;
-  font-family: var(--font-sans);
+  font-family: var(--font-display);
   font-variation-settings: "wdth" 120;
   font-size: 6.25rem;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 0.9;
   letter-spacing: 0;
+  text-transform: uppercase;
   color: var(--color-portal-ink, #0a0a0a);
   white-space: nowrap;
 }
@@ -194,12 +196,13 @@
 
   .mHeadingText,
   .mHeadingLink {
-    font-family: var(--font-sans);
+    font-family: var(--font-display);
     font-variation-settings: "wdth" 120;
     font-size: clamp(2.5rem, 12vw, 3.5rem);
-    font-weight: 700;
+    font-weight: 800;
     line-height: 0.9;
     letter-spacing: 0;
+    text-transform: uppercase;
     color: var(--color-portal-ink, #0a0a0a);
     white-space: nowrap;
   }

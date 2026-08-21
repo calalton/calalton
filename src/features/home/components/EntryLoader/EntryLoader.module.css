@@ -32,7 +32,7 @@
   position: absolute;
   top: var(--edge-hero);
   right: var(--edge-hero);
-  font-family: var(--font-mono-2);
+  font-family: var(--font-display);
   font-size: var(--text-hero-hint);
   line-height: 1;
   font-variant-numeric: tabular-nums;

@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { GooText } from "@/components/effects/GooText/GooText";
 import { cn } from "@/lib/cn";
 import styles from "./WorkSphere.module.css";
 
@@ -84,10 +85,10 @@ export function WorkHeading() {
       className={cn(styles.headingWrap, "featured-heading-wrap")}
     >
       <div data-featured="text" className={styles.heading} aria-hidden="true">
-        Work
+        <GooText>Work</GooText>
       </div>
       <div data-featured="text" className={styles.heading} aria-hidden="true">
-        24&ndash;26
+        <GooText>24&ndash;26</GooText>
       </div>
       <a
         data-featured="link"

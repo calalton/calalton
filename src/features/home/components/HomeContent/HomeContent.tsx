@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { GooText } from "@/components/effects/GooText/GooText";
 import { ContactDial } from "@/features/home/components/ContactDial/ContactDial";
 import { WorkSphereSection } from "@/features/home/components/WorkSphere/WorkSphereSection";
 import styles from "./HomeContent.module.css";
@@ -79,15 +80,17 @@ function GapHeading({ text, side }: { text: string; side: "left" | "right" }) {
   );
 }
 
-function AboutCopy() {
+function AboutCopy({ reveal }: { reveal: boolean }) {
   return (
     <p className={styles.aboutParagraph} aria-label={aboutCopy}>
-      {aboutCopyLines.map((line, index) => (
-        <span key={line} className={styles.aboutCopyLine}>
-          {line}
-          {index < aboutCopyLines.length - 1 ? " " : null}
-        </span>
-      ))}
+      <GooText trigger={reveal} rise={28} style={{ display: "block" }}>
+        {aboutCopyLines.map((line, index) => (
+          <span key={line} className={styles.aboutCopyLine}>
+            {line}
+            {index < aboutCopyLines.length - 1 ? " " : null}
+          </span>
+        ))}
+      </GooText>
     </p>
   );
 }
@@ -95,7 +98,9 @@ function AboutCopy() {
 function MonologAboutSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const visibleRef = useRef(false);
+  const gapCompleteRef = useRef(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [gapComplete, setGapComplete] = useState(false);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -158,6 +163,12 @@ function MonologAboutSection() {
 
       visibleRef.current = rect.bottom > 0 && rect.top < viewportHeight;
       applyProgress(progress);
+
+      // Once the gap heading has assembled, let the about copy goo in after it.
+      if (progress >= 0.62 && !gapCompleteRef.current) {
+        gapCompleteRef.current = true;
+        setGapComplete(true);
+      }
     };
 
     const schedule = () => {
@@ -225,7 +236,7 @@ function MonologAboutSection() {
           ))}
         </div>
         <div className={styles.aboutBottom}>
-          <AboutCopy />
+          <AboutCopy reveal={gapComplete} />
         </div>
       </div>
     </section>
@@ -297,9 +308,15 @@ function ContactSection() {
     >
       <div className={styles.contactInner}>
         <h2 className={styles.statement}>
-          <span>Let&apos;s build</span>
-          <span>an experience</span>
-          <span>that moves</span>
+          <GooText amount={20} duration={800} delay={0}>
+            Let&apos;s build
+          </GooText>
+          <GooText amount={20} duration={800} delay={100}>
+            an experience
+          </GooText>
+          <GooText amount={20} duration={800} delay={200}>
+            that moves
+          </GooText>
         </h2>
 
         <div className={styles.dialWrap}>

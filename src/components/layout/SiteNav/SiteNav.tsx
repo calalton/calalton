@@ -4,18 +4,12 @@
 import Link from "next/link";
 import type { MouseEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { heroContent, navLinks } from "@/content/hero";
-import { EntryScrambleText } from "@/features/home/components/EntryScrambleText/EntryScrambleText";
+import { navLinks } from "@/content/hero";
+import { GooText } from "@/components/effects/GooText/GooText";
 import { useScrollStage } from "@/features/home/components/ScrollStage/ScrollStage";
 import { MenuScrambleText } from "./MenuScrambleText";
 import { MenuTransitionCanvas } from "./MenuTransitionCanvas";
 import styles from "./SiteNav.module.css";
-
-const timeFormatter = new Intl.DateTimeFormat("en-GB", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
 
 /**
  * Persistent primary nav. Fixed to the top-right of the viewport so it stays
@@ -26,14 +20,6 @@ export function SiteNav() {
   const scrollStage = useScrollStage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [backdropMounted, setBackdropMounted] = useState(false);
-  const [time, setTime] = useState("--:--");
-
-  useEffect(() => {
-    const update = () => setTime(timeFormatter.format(new Date()));
-    update();
-    const interval = window.setInterval(update, 30_000);
-    return () => window.clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.mobileMenuOpen = menuOpen
@@ -72,18 +58,14 @@ export function SiteNav() {
       aria-label="Primary"
     >
       <div className={styles.links}>
-        {navLinks.map((link) => (
+        {navLinks.map((link, index) => (
           <Link
             key={link.href}
             href={link.href}
             className={styles.link}
             onClick={(event) => handleClick(event, link.href)}
           >
-            <EntryScrambleText
-              text={link.label}
-              startDelayMs={0}
-              scrambleColors={false}
-            />
+            <GooText delay={index * 80}>{link.label}</GooText>
           </Link>
         ))}
       </div>
@@ -139,11 +121,6 @@ export function SiteNav() {
                   />
                 </Link>
               ))}
-            </div>
-            <div className={styles.menuFooter}>
-              <span className={styles.menuReadout}>
-                {time} {heroContent.telemetry.temperature}
-              </span>
             </div>
           </div>
         </>

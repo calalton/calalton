@@ -71,10 +71,10 @@
 .aboutHeading {
   margin: 0;
   color: var(--color-paper);
-  font-family: var(--font-sans);
+  font-family: var(--font-display);
   font-variation-settings: "wdth" 120;
   font-size: clamp(2.9rem, min(6.7vw, 10.75vh), 8.1rem);
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0;
   line-height: 0.9;
   text-transform: uppercase;

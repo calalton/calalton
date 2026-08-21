@@ -18,6 +18,12 @@
     visibility 0s linear 0s;
 }
 
+:global(html[data-entry-state="loading"]) .root {
+  opacity: 0;
+  transform: translate3d(0, 0.3rem, 0) scale(0.88);
+  filter: blur(3px);
+}
+
 :global(html[data-footer-active="true"]) .root {
   visibility: hidden;
   opacity: 0;

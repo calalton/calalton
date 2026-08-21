@@ -1,4 +1,4 @@
-import { EntryScrambleText } from "../EntryScrambleText/EntryScrambleText";
+import { GooText } from "@/components/effects/GooText/GooText";
 import { HeroBackdrop } from "../HeroBackdrop/HeroBackdrop";
 import { HeroGlass2D } from "../HeroGlass2D/HeroGlass2D";
 import { HeroPointerField } from "../HeroPointerField/HeroPointerField";
@@ -27,23 +27,21 @@ export function HeroSection() {
           className={styles.statement}
           aria-label={heroContent.statement.join(" ")}
         >
-          {heroContent.statement.map((line) => (
-            <EntryScrambleText
+          {heroContent.statement.map((line, index) => (
+            <GooText
               key={line}
               className={styles.statementLine}
-              text={line}
-              startDelayMs={400}
-              letterDelayMs={18}
-            />
+              delay={index * 90}
+              exit
+            >
+              {line}
+            </GooText>
           ))}
         </h1>
         <p className={styles.scrollHint}>
-          <EntryScrambleText
-            text={heroContent.scrollHint}
-            startDelayMs={400}
-            letterDelayMs={24}
-            scrambleColors={false}
-          />
+          <GooText delay={240} exit>
+            {heroContent.scrollHint}
+          </GooText>
         </p>
       </div>
     </section>
