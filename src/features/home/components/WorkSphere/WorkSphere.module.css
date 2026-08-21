@@ -2,7 +2,7 @@
   position: relative;
   overflow: clip;
   isolation: isolate;
-  background: var(--color-paper, #f4f2ee);
+  background: var(--color-portal-matte, #fff);
   color: var(--color-portal-ink, #0a0a0a);
 }
 

@@ -59,27 +59,30 @@ export function GooText({
     let revealed = false;
     let removeExit: (() => void) | null = null;
 
-    // After revealing, blob back up and fade as the hero scrolls away.
+    // Exit blob grows from 0 — starting it at `start` made the copy snap out
+    // abruptly the instant the scroll crossed zero instead of gooing away.
+    const maxExitBlur = start * 2 + 12;
+    const exitProgress = () => {
+      const raw =
+        Number.parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            "--hero-exit-progress",
+          ),
+        ) || 0;
+      return Math.min(1, Math.max(0, raw));
+    };
+
+    // After revealing, drive the reverse goo + fade from hero-exit-progress.
     const startExit = () => {
       const onScroll = () => {
-        const raw =
-          Number.parseFloat(
-            getComputedStyle(document.documentElement).getPropertyValue(
-              "--hero-exit-progress",
-            ),
-          ) || 0;
-        const p = Math.min(1, Math.max(0, raw));
+        const p = exitProgress();
         if (p <= 0.001) {
           root.style.filter = "";
           root.style.opacity = "";
           return;
         }
-        // Ease-out blob + fade so the copy goos back up smoothly, not abruptly.
         const eased = p * (2 - p);
-        blur.setAttribute(
-          "stdDeviation",
-          (start + eased * (start * 2 + 10)).toFixed(3),
-        );
+        blur.setAttribute("stdDeviation", (eased * maxExitBlur).toFixed(3));
         root.style.filter = `url(#${filterId})`;
         root.style.opacity = (1 - eased).toFixed(3);
       };
@@ -96,7 +99,16 @@ export function GooText({
       const tick = (now: number) => {
         const t = Math.min(1, Math.max(0, (now - startAt) / duration));
         const eased = 1 - Math.pow(1 - t, 3);
-        blur.setAttribute("stdDeviation", (start * (1 - eased)).toFixed(3));
+        // Blend the reveal blur with any scroll-driven exit blur so scrolling
+        // mid-reveal stays seamless instead of jumping when the exit arms.
+        let sd = start * (1 - eased);
+        if (exit) {
+          const p = exitProgress();
+          const e = p * (2 - p);
+          sd += e * maxExitBlur;
+          root.style.opacity = e > 0 ? (1 - e).toFixed(3) : "";
+        }
+        blur.setAttribute("stdDeviation", sd.toFixed(3));
         if (rise) {
           root.style.transform = `translateY(${(rise * (1 - eased)).toFixed(2)}px)`;
         }

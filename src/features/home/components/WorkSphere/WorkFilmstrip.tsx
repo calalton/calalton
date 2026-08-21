@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { GooText } from "@/components/effects/GooText/GooText";
 import { sphereImages } from "@/content/sphere-gallery";
 import { cn } from "@/lib/cn";
 import styles from "./WorkSphere.module.css";
@@ -76,10 +77,10 @@ export function WorkFilmstrip() {
       <div className={styles.mSticky}>
         <div ref={headingRef} className={styles.mHeading}>
           <span className={styles.mHeadingText} aria-hidden="true">
-            Work
+            <GooText>Work</GooText>
           </span>
           <span className={styles.mHeadingText} aria-hidden="true">
-            24&ndash;26
+            <GooText>24&ndash;26</GooText>
           </span>
           <a
             href="#selected-work"
