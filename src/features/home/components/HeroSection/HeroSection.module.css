@@ -18,11 +18,7 @@
   align-items: end;
   column-gap: var(--gutter-hero);
   color: var(--color-portal-ink);
-  opacity: clamp(
-    0,
-    calc(1 - var(--hero-scene-progress, 0) * 160),
-    1
-  );
+  opacity: 1;
   transform: translate3d(
     0,
     calc(var(--hero-scene-progress, 0) * -0.75rem),
